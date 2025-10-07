@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectrophane"
+version = "0.0.1"
+description = "Color lithophane generator with material characterization"
+authors = [{ name = "Michael Doppler"}]
+license = { file = "LICENCE" }
+readme = "README.md"
+requires-python = ">=3.9"
+
+# Core dependencies
+#####################TODO
+dependencies = [
+    "numpy",
+    "jax",
+    "matplotlib",
+    "pillow",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+###rawpy
+
+# CLI entry points
+#####################TODO
+#[project.scripts]
+#spectrophane-train = "spectrophane.core.train:main"
+#spectrophane-palette = "spectrophane.lithophane_generation.palletizing.cli:main"
+#spectrophane-render = "spectrophane.lithophane_generation.render:main"
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"spectrophane.resources" = ["**/*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
