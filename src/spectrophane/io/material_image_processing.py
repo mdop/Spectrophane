@@ -1,10 +1,12 @@
 import rawpy
 import numpy as np
 from typing import Tuple
+from spectrophane.io.data_io import get_resource_path
 
-def raw_to_linear_rgb(path: str) -> np.ndarray:
-    """Takes path to raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""
-    with rawpy.imread(str(path)) as raw:
+def raw_to_linear_rgb(filename: str) -> np.ndarray:
+    """Takes filename of the raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""
+    total_path = get_resource_path("material_data/images/" + filename)
+    with rawpy.imread(total_path) as raw:
         rgb = raw.postprocess(
             use_camera_wb=False,
             no_auto_bright=True,
@@ -18,16 +20,22 @@ def decode_srgb_img(image: np.ndarray) -> np.ndarray:
     #TODO: Add customizable gamma
     return np.clip(np.where(image < 0.081, image/4.5, np.pow((image+0.099)/1.099,1/0.45)), 0,1)
     
-def roi_median(image: np.ndarray, roi: Tuple[int, int, int, int]) -> np.ndarray:
+def roi_aggregate(image: np.ndarray, roi: Tuple[int, int, int, int], mode: str = "median") -> np.ndarray:
     """Takes image numpy array and roi tuple (x0, y0, x1, y1)"""
     x0, y0, x1, y1 = roi
     patch = image[y0:y1, x0:x1, :]
     # robust mean (ignore saturated)
     valid = (patch < 1).all(axis=2)
     #TODO: Add warning for large fraction of saturated values
-    return np.median(patch[valid], axis=0)
+    if mode == "median":
+        return np.median(patch[valid], axis=0)
+    elif mode == "average":
+        return np.average(patch[valid], axis=0)
+    else:
+        raise ValueError("Unknown mode for image roi aggregation")
+    
 
-def image_to_linrgb(path: str) -> np.ndarray:
+def image_to_linrgb(filename: str) -> np.ndarray:
     """Takes image path and transforms it into linear rgb"""
     
     pass
