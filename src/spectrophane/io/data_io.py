@@ -1,37 +1,38 @@
 from importlib import resources
 from pathlib import Path
-import pathlib
-
 #default data
 #TODO: customize user data dir
-USER_DATA_DIR = Path.home / ".Spectrophane"
+USER_DATA_DIR = Path.home() / ".Spectrophane"
 PACKAGE_RESOURCES_ROOT = "spectrophane.resources"
 
-#resources.files("spectrophane.resources.material_data").joinpath("default.json").read_text()
+USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-def get_package_resource_path(project_resource_path: str) -> pathlib.Path | None:
-    """Determines Path object of a project resource from the root resources directory. E.g. "material_data/images/001.jnp". Returns None if resource does not exist """
-    resource_path_obj = str(Path(project_resource_path).parent)
-    resource_filename = Path(project_resource_path).name
-    resource_anchor = resource_path_obj.replace("/", ".").replace("\\", ".")
-    resource = resources.files(PACKAGE_RESOURCES_ROOT + "." + resource_anchor).joinpath(resource_filename)
-    if resource.exists():
-        return resource
-    else:
+def get_package_resource_path(project_resource_path: str) -> Path | None:
+    """Return a concrete filesystem path to a package resource, or None if it doesn't exist."""
+    project_path = Path(project_resource_path)
+    resource_anchor = project_path.parent.as_posix().replace("/", ".")
+    resource_filename = project_path.name
+    resource_root = f"{PACKAGE_RESOURCES_ROOT}.{resource_anchor}" if resource_anchor else PACKAGE_RESOURCES_ROOT
+    resource = resources.files(resource_root).joinpath(resource_filename)
+    if not resource.exists():
         return None
+    with resources.as_file(resource) as real_path:
+        return real_path
 
-def get_user_resource_path(project_resource_path: str) -> pathlib.Path | None:
-    """Determines Path object of a user supplied resource. Returns if resource does not exist."""
+def get_user_resource_path(project_resource_path: str) -> Path | None:
+    """Return a path to a user-supplied resource, or None if it doesn't exist."""
     path = USER_DATA_DIR / project_resource_path
-    if path.exists():
-        return path
-    else:
-        return None
+    return path if path.exists() else None
 
-def get_resource_path(project_resource_path: str) -> pathlib.Path | None:
-    """Determines Path object for a requested resource path. User supplied data are prioritized over package provided resources. Returns None if no matching resource in either user data or package data is found."""
-    path = get_user_resource_path(project_resource_path)
-    if path is None:
-        path = get_package_resource_path(project_resource_path)
-    return path
+def get_resource_path(project_resource_path: str) -> Path | None:
+    """
+    Return path for a requested resource.
+    User-supplied data take priority over package resources.
+    Returns None if neither exists.
+    """
+    user_path = get_user_resource_path(project_resource_path)
+    if user_path:
+        return user_path
+    return get_package_resource_path(project_resource_path)
+
 
