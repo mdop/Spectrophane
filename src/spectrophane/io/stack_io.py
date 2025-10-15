@@ -18,7 +18,7 @@ def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict
     
     material_nums = np.zeros((n_stacks, max_layers), dtype=np.uint16)
     thicknesses = np.zeros((n_stacks, max_layers))
-    lengths = np.zeros((n_stacks,), dtype=np.uint8)
+    lengths = np.zeros(n_stacks, dtype=np.uint8)
 
     material_id_list = [material["id"] for material in material_list]
     for i, stack in enumerate(stack_data):
