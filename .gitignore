@@ -1,5 +1,7 @@
 ~/.Colorinator/
 testscripts/
+.vscode/
+.continue
 
 ##gitignore from https://github.com/github/gitignore
 

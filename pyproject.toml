@@ -24,6 +24,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-mock",
+    "rawpy",
 ]
 
 ###rawpy
@@ -35,6 +37,10 @@ dev = [
 #spectrophane-palette = "spectrophane.lithophane_generation.palletizing.cli:main"
 #spectrophane-render = "spectrophane.lithophane_generation.render:main"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
