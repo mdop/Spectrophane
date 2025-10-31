@@ -8,7 +8,7 @@ class StackData():
     material_list: Sequence[Dict]
     material_nums: np.ndarray
     thicknesses: np.ndarray
-    stack_count: int
+    stack_counts: np.ndarray
 
 def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict]) -> StackData:
     """Takes a material list and a list of material names + thicknesses and morphs them into a padded numpy material and thickness, and a stacklength array."""
@@ -22,9 +22,9 @@ def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict
 
     material_id_list = [material["id"] for material in material_list]
     for i, stack in enumerate(stack_data):
-        for j, (mat, thickness) in enumerate(stack):
-            material_nums[i, j] = material_id_list.index(mat)
-            thicknesses[i, j] = thickness
+        for j, layer_data in enumerate(stack):
+            material_nums[i, j] = material_id_list.index(layer_data["id"])
+            thicknesses[i, j] = layer_data["d"]
         lengths[i] = len(stack)
 
     stack_data = StackData(material_list, material_nums, thicknesses, lengths)

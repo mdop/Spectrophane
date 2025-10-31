@@ -16,6 +16,7 @@ def linrgb_to_xyz(rgb_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip:
     else:
         raise ValueError(f"Unknown RGB to XYZ conversion matrix name: {matrix}")
     xyz = transform_matrix @ rgb_values.T
+    xyz = xyz.T
     if clip:
         xyz = np.clip(xyz, 0, 1)
     return xyz
