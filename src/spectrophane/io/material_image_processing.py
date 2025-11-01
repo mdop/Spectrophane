@@ -3,11 +3,17 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 import json
-from typing import Sequence, Callable, Dict
+from typing import Sequence, Callable
+from dataclasses import dataclass
 
 from spectrophane.io.data_io import get_resource_path
 from spectrophane.core.color_transformations import linrgb_to_xyz
-from spectrophane.io.stack_io import stack_json_to_array
+from spectrophane.io.stack_io import stack_json_to_array, StackData
+
+@dataclass
+class TrainingRefImageData():
+    transmission_stacks: StackData
+    transmission_xyz: np.ndarray
 
 def raw_to_linear_rgb(filename: str) -> np.ndarray:
     """Takes filename of the raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""
@@ -107,4 +113,4 @@ def parse_material_characterization_data(filename : str = "default.json"):
             stack_dictlist.extend(image_stack_dictlist)
         xyz_array = np.array(xyz_colors)
         stack_data = stack_json_to_array(data["materials"], stack_dictlist)
-        return stack_data, xyz_array 
+        return TrainingRefImageData(stack_data, xyz_array)

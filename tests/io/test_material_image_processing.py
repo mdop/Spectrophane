@@ -179,7 +179,9 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     mocker.patch('builtins.open', mock_file)
     transform_mock = mocker.patch('spectrophane.io.material_image_processing.import_image', return_value=mock_linrgb_processing_image_rois[0])
     
-    result_stack_data, result_xyz_array = parse_material_characterization_data()
+    result = parse_material_characterization_data()
+    result_stack_data = result.transmission_stacks
+    result_xyz_array = result.transmission_xyz
     print(result_stack_data)
     print(result_xyz_array)
     assert np.all(np.isfinite(result_xyz_array))
