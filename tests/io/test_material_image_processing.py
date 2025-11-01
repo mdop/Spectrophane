@@ -1,8 +1,6 @@
 import pytest
-from unittest.mock import MagicMock, patch, ANY
-from pathlib import Path
+from unittest.mock import ANY
 import numpy as np
-from PIL import Image
 import json
 from spectrophane.io.material_image_processing import (
     raw_to_linear_rgb,
