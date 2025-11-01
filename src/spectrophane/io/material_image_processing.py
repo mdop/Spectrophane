@@ -102,7 +102,7 @@ def parse_material_characterization_data(filename : str = "default.json"):
         data = json.load(file)
         stack_dictlist = []
         xyz_colors = []
-        for image_data in data["images"]["measurement_images"]:
+        for image_data in data["images"]["measurement_images"]["transmission"]:
             white_rois = image_data["white_refs"]
             black_rois = image_data["black_refs"]
             color_rois = [area["roi"]               for area in image_data["measurement_areas"]]

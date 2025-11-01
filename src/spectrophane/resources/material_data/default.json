@@ -42,24 +42,26 @@
         "measurement_area": [1,1,100,100]
       }
     ],
-    "measurement_images": [
-      {
-        "filename": "bambu_yellow.jnp",
-        "illuminated_field": [1,1,100,100],
-        "brightness_calibration": "profile1",
-        "white_refs": [[1,1,10,10],[10,10,20,20]],
-        "black_refs": [[10000,10000,10010,10010]],
-        "measurement_areas": [
-          {
-            "stack": [{"id": "bl_yellow", "d":0.03}],
-            "roi": [50,50,60,60]
-          },
-          {
-            "stack": [{"id": "bl_yellow", "d":0.06}],
-            "roi": [60,60,70,70]
-          }
-        ]
-      }
-    ]
+    "measurement_images": {
+      "transmission": [
+        {
+          "filename": "bambu_yellow.jnp",
+          "illuminated_field": [1,1,100,100],
+          "brightness_calibration": "profile1",
+          "white_refs": [[1,1,10,10],[10,10,20,20]],
+          "black_refs": [[10000,10000,10010,10010]],
+          "measurement_areas": [
+            {
+              "stack": [{"id": "bl_yellow", "d":0.03}],
+              "roi": [50,50,60,60]
+            },
+            {
+              "stack": [{"id": "bl_yellow", "d":0.06}],
+              "roi": [60,60,70,70]
+            }
+          ]
+        }
+      ]
+    }
   }
 }

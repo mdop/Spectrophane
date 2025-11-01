@@ -147,31 +147,33 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
             }
         ],
         "images": {
-            "measurement_images": [
-                {
-                    "filename": "test.jpg",
-                    "white_refs": [mock_linrgb_processing_image_rois[3]],
-                    "black_refs": [mock_linrgb_processing_image_rois[1],mock_linrgb_processing_image_rois[2]],
-                    "measurement_areas": [
-                        {
-                            "stack": [{"id": "mat1", "d":0.03}],
-                            "roi": mock_linrgb_processing_image_rois[4]
-                        },
-                        {
-                            "stack": [{"id": "mat2", "d":0.03}],
-                            "roi": mock_linrgb_processing_image_rois[5]
-                        },
-                        {
-                            "stack": [{"id": "mat1", "d":0.03}, {"id": "mat2", "d":0.03}],
-                            "roi": mock_linrgb_processing_image_rois[4]
-                        },
-                        {
-                            "stack": [{"id": "mat2", "d":0.03}],
-                            "roi": mock_linrgb_processing_image_rois[5]
-                        }
-                    ]
-                }
-            ]
+            "measurement_images": {
+                "transmission": [
+                    {
+                        "filename": "test.jpg",
+                        "white_refs": [mock_linrgb_processing_image_rois[3]],
+                        "black_refs": [mock_linrgb_processing_image_rois[1],mock_linrgb_processing_image_rois[2]],
+                        "measurement_areas": [
+                            {
+                                "stack": [{"id": "mat1", "d":0.03}],
+                                "roi": mock_linrgb_processing_image_rois[4]
+                            },
+                            {
+                                "stack": [{"id": "mat2", "d":0.03}],
+                                "roi": mock_linrgb_processing_image_rois[5]
+                            },
+                            {
+                                "stack": [{"id": "mat1", "d":0.03}, {"id": "mat2", "d":0.03}],
+                                "roi": mock_linrgb_processing_image_rois[4]
+                            },
+                            {
+                                "stack": [{"id": "mat2", "d":0.03}],
+                                "roi": mock_linrgb_processing_image_rois[5]
+                            }
+                        ]
+                    }
+                ]
+            }
         }
     }
     mock_file = mocker.mock_open(read_data=json.dumps(mock_data))
