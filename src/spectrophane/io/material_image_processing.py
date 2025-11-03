@@ -95,22 +95,19 @@ def process_image_to_xyz(linrgb_image: np.ndarray, white_rois: Sequence[Sequence
     color_xyz_corr = color_xyz / xyz_correction
     return color_xyz_corr
 
-def parse_material_characterization_data(filename : str = "default.json"):
-    """Takes json material characterization file and returns stack data arrays and a corresponding color array"""
-    full_path = get_resource_path("material_data/" + filename)
-    with open(full_path, "r") as file:
-        data = json.load(file)
-        stack_dictlist = []
-        xyz_colors = []
-        for image_data in data["images"]["measurement_images"]["transmission"]:
-            white_rois = image_data["white_refs"]
-            black_rois = image_data["black_refs"]
-            color_rois = [area["roi"]               for area in image_data["measurement_areas"]]
-            image_stack_dictlist = [area["stack"]   for area in image_data["measurement_areas"]]
-            image_array = import_image(image_data["filename"])
-            xyz_imagecolors = process_image_to_xyz(image_array, white_rois, black_rois, color_rois)
-            xyz_colors.extend(xyz_imagecolors)
-            stack_dictlist.extend(image_stack_dictlist)
-        xyz_array = np.array(xyz_colors)
-        stack_data = stack_json_to_array(data["materials"], stack_dictlist)
-        return TrainingRefImageData(stack_data, xyz_array)
+def parse_material_characterization_data(input_data):
+    """Takes json material characterization file data and returns stack data arrays and a corresponding color array"""
+    stack_dictlist = []
+    xyz_colors = []
+    for image_data in input_data["images"]["measurement_images"]["transmission"]:
+        white_rois = image_data["white_refs"]
+        black_rois = image_data["black_refs"]
+        color_rois = [area["roi"]               for area in image_data["measurement_areas"]]
+        image_stack_dictlist = [area["stack"]   for area in image_data["measurement_areas"]]
+        image_array = import_image(image_data["filename"])
+        xyz_imagecolors = process_image_to_xyz(image_array, white_rois, black_rois, color_rois)
+        xyz_colors.extend(xyz_imagecolors)
+        stack_dictlist.extend(image_stack_dictlist)
+    xyz_array = np.array(xyz_colors)
+    stack_data = stack_json_to_array(input_data["materials"], stack_dictlist)
+    return TrainingRefImageData(stack_data, xyz_array)

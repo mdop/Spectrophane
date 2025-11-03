@@ -1,5 +1,6 @@
 from importlib import resources
 from pathlib import Path
+import json
 #default data
 #TODO: customize user data dir
 USER_DATA_DIR = Path.home() / ".Spectrophane"
@@ -35,4 +36,9 @@ def get_resource_path(project_resource_path: str) -> Path | None:
         return user_path
     return get_package_resource_path(project_resource_path)
 
-
+def get_json_resource(project_resource_path: str) -> dict:
+    """Takes a path relative to the project resource root and returns the parsed json file"""
+    total_path = get_resource_path(project_resource_path)
+    with open(total_path, "r") as file:
+        data = json.load(file)
+    return data

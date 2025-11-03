@@ -4,7 +4,6 @@ import json
 import copy
 from unittest.mock import ANY
 from spectrophane.io.material_spectrum_processing import (
-        import_measured_spectra,
         get_common_wavelength_space,
         reshape_spectrum,
         process_spectrum_list,
@@ -95,19 +94,6 @@ def mock_combined_source_file(mock_transmission_source_file, mock_reflection_sou
     data["spectra"]["reflection"] = mock_reflection_source_file["spectra"]["reflection"]
     return data
 
-@pytest.mark.parametrize(("data","spectra_out","materials_out"),
-                         [({"spectra": "Spectra", "materials": "Materials", "dummy": "somedata"}, "Spectra", "Materials"),
-                          ({"dummy": "somedata"}, {}, {}),
-                          ({"spectra": "Spectra", "dummy": "somedata"}, "Spectra", {}),
-                          ({"materials": "Materials", "dummy": "somedata"}, {}, "Materials")])
-def test_import_measured_spectra(mocker, data, spectra_out, materials_out):
-    mock_file = mocker.mock_open(read_data=json.dumps(data))
-    mocker.patch('builtins.open', mock_file)
-    
-    result_spectra, result_materials = import_measured_spectra("test.json")
-
-    assert result_spectra == spectra_out
-    assert result_materials == materials_out
 
 @pytest.mark.parametrize(("min", "step", "lengths", "ref_min", "ref_step", "ref_length"), [
                             ((0,0,0,0),(1,1,1,1),(10,20,30,40),0,1,10),
@@ -140,15 +126,11 @@ def test_process_spectrum_list(mock_empty_source_file, mock_transmission_source_
     assert transmission_result[1].shape == (5,80)
 
 def test_prepare_spectrum_data_empty(mocker, mock_empty_source_file):
-    mock_empty = mocker.mock_open(read_data=json.dumps(mock_empty_source_file))
-    mocker.patch('builtins.open', mock_empty)
-    empty_result = prepare_spectrum_data()
+    empty_result = prepare_spectrum_data(mock_empty_source_file)
     assert empty_result is None
 
 def test_prepare_spectrum_data_transmission(mocker, mock_transmission_source_file):
-    mock_transmission = mocker.mock_open(read_data=json.dumps(mock_transmission_source_file))
-    mocker.patch('builtins.open', mock_transmission)
-    transmission_result = prepare_spectrum_data()
+    transmission_result = prepare_spectrum_data(mock_transmission_source_file)
     assert isinstance(transmission_result, TrainingRefSpectraData)
     assert transmission_result.reflection_spectra is None
     assert transmission_result.reflection_stacks is None
@@ -156,9 +138,7 @@ def test_prepare_spectrum_data_transmission(mocker, mock_transmission_source_fil
     assert isinstance(transmission_result.transmission_spectra, np.ndarray)
 
 def test_prepare_spectrum_data_reflection(mocker, mock_reflection_source_file):
-    mock_reflection = mocker.mock_open(read_data=json.dumps(mock_reflection_source_file))
-    mocker.patch('builtins.open', mock_reflection)
-    reflection_result = prepare_spectrum_data()
+    reflection_result = prepare_spectrum_data(mock_reflection_source_file)
     assert isinstance(reflection_result, TrainingRefSpectraData)
     assert reflection_result.transmission_spectra is None
     assert reflection_result.transmission_stacks is None
@@ -166,9 +146,7 @@ def test_prepare_spectrum_data_reflection(mocker, mock_reflection_source_file):
     assert isinstance(reflection_result.reflection_spectra, np.ndarray)
 
 def test_prepare_spectrum_data_combined(mocker, mock_combined_source_file):
-    mock_combined = mocker.mock_open(read_data=json.dumps(mock_combined_source_file))
-    mocker.patch('builtins.open', mock_combined)
-    combined_result = prepare_spectrum_data()
+    combined_result = prepare_spectrum_data(mock_combined_source_file)
     assert isinstance(combined_result, TrainingRefSpectraData)
     assert isinstance(combined_result.transmission_stacks, StackData)
     assert isinstance(combined_result.transmission_spectra, np.ndarray)

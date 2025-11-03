@@ -18,13 +18,6 @@ class TrainingRefSpectraData:
     fallback_spectrumlength: Number
 
 
-def import_measured_spectra(filename: str) -> Tuple[Dict, Sequence]:
-    """Imports provided spectra provided in the source data required for parsing spectral data. Returns spectra and the material list for stack analysis"""
-    total_path = get_resource_path("material_data/" + filename)
-    with open(total_path, "r") as file:
-        data = json.load(file)
-    return data.get("spectra", {}), data.get("materials", {})
-
 def get_common_wavelength_space(min_wavelengths: Sequence[Number], step_wavelengths: Sequence[Number], spectrum_lengths: Sequence[int]) -> Tuple[Number, Number, int] | Tuple[None, None, None]:
     """Takes a set of spectra and finds a suitable common wavelength space for analysis expressed as (min_wavelength, step_wavelength, values)"""
     if len(min_wavelengths) != len(step_wavelengths) or len(min_wavelengths) != len(spectrum_lengths):
@@ -59,9 +52,10 @@ def process_spectrum_list(spectrum_data_list: Sequence[Dict], materials: Sequenc
         output_spectra[i, :] = spectrum_output
     return stack_output, output_spectra
 
-def prepare_spectrum_data(filename: str = "default.json") -> TrainingRefSpectraData | None:
-    """Takes the raw data filename and parses data, transforms spectra to common denominator, and returns a harmonized spectral dataset and associated stacks. If no data are found returns None"""
-    spectra_dict, materials = import_measured_spectra(filename)
+def prepare_spectrum_data(input_data) -> TrainingRefSpectraData | None:
+    """Takes the raw input data file content and parses data, transforms spectra to common denominator, and returns a harmonized spectral dataset and associated stacks. If no data are found returns None"""
+    spectra_dict = input_data.get("spectra", {})
+    materials = input_data.get("materials", {})
 
     #find common wavelength space
     min_wavelengths = []
