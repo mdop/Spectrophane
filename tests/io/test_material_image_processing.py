@@ -12,7 +12,7 @@ from spectrophane.io.material_image_processing import (
     aggregate_rois,
     aggregate_image_rois,
     process_image_to_xyz,
-    parse_material_characterization_data
+    parse_image_data
 )
 from spectrophane.io.stack_io import StackData
 
@@ -177,7 +177,7 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     mock_file = mocker.mock_open(read_data=json.dumps(mock_data))
     mocker.patch("spectrophane.io.material_image_processing.import_image", return_value=mock_linrgb_processing_image_rois[0])
     
-    result = parse_material_characterization_data(mock_data)
+    result = parse_image_data(mock_data)
     result_stack_data = result.transmission_stacks
     result_xyz_array = result.transmission_xyz
     print(result_stack_data)

@@ -95,7 +95,7 @@ def process_image_to_xyz(linrgb_image: np.ndarray, white_rois: Sequence[Sequence
     color_xyz_corr = color_xyz / xyz_correction
     return color_xyz_corr
 
-def parse_material_characterization_data(input_data):
+def parse_image_data(input_data):
     """Takes json material characterization file data and returns stack data arrays and a corresponding color array"""
     stack_dictlist = []
     xyz_colors = []
