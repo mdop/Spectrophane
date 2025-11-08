@@ -82,7 +82,26 @@ def mock_reflection_source_file(mock_empty_source_file):
                 "wl_start": 400,
                 "wl_step": 2,
                 "stack": [{"id": "bl_jwhite", "d":0.20}],
-                "value": [1] * 110
+                "value": [1] * 110,
+                "background": "w"
+            },
+            {
+                "wl_start": 400,
+                "wl_step": 2,
+                "stack": [{"id": "bl_jwhite", "d":0.20}],
+                "value": [1] * 110,
+                "background": "b"
+            },
+            {
+                "wl_start": 400,
+                "wl_step": 2,
+                "stack": [{"id": "bl_jwhite", "d":0.20}],
+                "value": [1] * 110,
+                "background": {
+                    "wl_start": 400,
+                    "wl_step": 2,
+                    "value": [0.5] * 110
+                }
             }
         ]
     }
@@ -119,11 +138,21 @@ def test_reshape_spectrum(old_min_wavelength, old_step_wavelength, old_values, n
 
 def test_process_spectrum_list(mock_empty_source_file, mock_transmission_source_file):
     empty_result = process_spectrum_list(mock_empty_source_file["spectra"].get("transmission", {},), mock_empty_source_file.get("materials", {}), None, None, None)
-    assert empty_result == (None, None)
+    assert empty_result == (None, None, None)
 
     transmission_result = process_spectrum_list(mock_transmission_source_file["spectra"].get("transmission", {},), mock_transmission_source_file.get("materials", {}), 410, 1, 80)
     assert isinstance(transmission_result[0], StackData)
     assert transmission_result[1].shape == (5,80)
+    assert transmission_result[2].shape == transmission_result[1].shape
+    assert np.all(transmission_result[2] == 0)
+
+def test_process_spectrum_list_background(mock_reflection_source_file):
+    reflection_result = process_spectrum_list(mock_reflection_source_file["spectra"].get("reflection", {},), mock_reflection_source_file.get("materials", {}), 410, 1, 80)
+    assert reflection_result[2].shape == reflection_result[1].shape
+    assert np.all(reflection_result[2][0,:] == 0)
+    assert np.all(reflection_result[2][1,:] == 1)
+    assert np.all(reflection_result[2][2,:] == 0)
+    assert np.all(reflection_result[2][3,:] == 0.5)
 
 def test_prepare_spectrum_data_empty(mocker, mock_empty_source_file):
     empty_result = prepare_spectrum_data(mock_empty_source_file)
@@ -153,4 +182,4 @@ def test_prepare_spectrum_data_combined(mocker, mock_combined_source_file):
     assert isinstance(combined_result.reflection_stacks, StackData)
     assert isinstance(combined_result.reflection_spectra, np.ndarray)
     assert combined_result.transmission_spectra.shape == (5,ANY)
-    assert combined_result.reflection_spectra.shape == (2,ANY)
+    assert combined_result.reflection_spectra.shape == (4,ANY)

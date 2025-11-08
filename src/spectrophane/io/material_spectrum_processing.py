@@ -13,6 +13,7 @@ class TrainingRefSpectraData:
     transmission_spectra: np.ndarray
     reflection_stacks: StackData
     reflection_spectra: np.ndarray
+    reflection_background: np.ndarray
     min_wavelength: Number
     step_wavelength: Number
     fallback_spectrumlength: Number
@@ -43,14 +44,24 @@ def reshape_spectrum(old_min_wavelength: Number, old_step_wavelength: Number, ol
 def process_spectrum_list(spectrum_data_list: Sequence[Dict], materials: Sequence[Dict], min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[StackData, np.ndarray] | Tuple[None, None]:
     """Takes data from a list of spectrum data from the source file and returns output grade stack and spectrum data. If given an empty spectrum list will return Null, Null"""
     if len(spectrum_data_list) == 0:
-        return None, None
+        return None, None, None
     output_spectra = np.zeros((len(spectrum_data_list), spectrum_length),dtype=np.float64)
+    background_spectra = np.zeros((len(spectrum_data_list), spectrum_length),dtype=np.float64)
     stack_data_list = [entry["stack"] for entry in spectrum_data_list]
     stack_output = stack_json_to_array(materials, stack_data_list)
     for i, spectrum_dict in enumerate(spectrum_data_list):
         spectrum_output = reshape_spectrum(spectrum_dict["wl_start"], spectrum_dict["wl_step"], spectrum_dict["value"], min_wavelength, step_wavelength, spectrum_length)
         output_spectra[i, :] = spectrum_output
-    return stack_output, output_spectra
+        #reflectance of the background. "b" for ideally black, "w" for ideally white, or a spectrum if known. Defaults to black (array initialization).
+        if "background" in spectrum_dict:
+            if spectrum_dict["background"] == "b":
+                background_spectra[i,:] = 0
+            elif spectrum_dict["background"] == "w":
+                background_spectra[i,:] = 1
+            elif isinstance(spectrum_dict["background"], dict):
+                background_spectra[i,:] = reshape_spectrum(spectrum_dict["background"]["wl_start"], spectrum_dict["background"]["wl_step"], spectrum_dict["background"]["value"], 
+                                                           min_wavelength, step_wavelength, spectrum_length)
+    return stack_output, output_spectra, background_spectra
 
 def prepare_spectrum_data(input_data) -> TrainingRefSpectraData | None:
     """Takes the raw input data file content and parses data, transforms spectra to common denominator, and returns a harmonized spectral dataset and associated stacks. If no data are found returns None"""
@@ -71,6 +82,8 @@ def prepare_spectrum_data(input_data) -> TrainingRefSpectraData | None:
     com_min_wavelength, com_step_wavelength, com_spectrum_length = get_common_wavelength_space(min_wavelengths, step_wavelengths, spectrum_lengths)
 
     #transform and compile spectrum data
-    transmission_stacks, transmission_spectra = process_spectrum_list(spectra_dict.get("transmission", {}), materials, com_min_wavelength, com_step_wavelength, com_spectrum_length)
-    reflection_stacks, reflection_spectra = process_spectrum_list(spectra_dict.get("reflection", {}), materials, com_min_wavelength, com_step_wavelength, com_spectrum_length)
-    return TrainingRefSpectraData(transmission_stacks, transmission_spectra, reflection_stacks, reflection_spectra, com_min_wavelength, com_step_wavelength, com_spectrum_length)
+    transmission_stacks, transmission_spectra, _ = process_spectrum_list(spectra_dict.get("transmission", {}), materials, com_min_wavelength, com_step_wavelength, com_spectrum_length)
+    reflection_stacks, reflection_spectra, reflection_background = process_spectrum_list(spectra_dict.get("reflection", {}), materials, com_min_wavelength, com_step_wavelength, com_spectrum_length)
+    return TrainingRefSpectraData(transmission_stacks, transmission_spectra, 
+                                  reflection_stacks, reflection_spectra, reflection_background, 
+                                  com_min_wavelength, com_step_wavelength, com_spectrum_length)
