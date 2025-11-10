@@ -138,7 +138,9 @@ def test_reshape_spectrum(old_min_wavelength, old_step_wavelength, old_values, n
 
 def test_process_spectrum_list(mock_empty_source_file, mock_transmission_source_file):
     empty_result = process_spectrum_list(mock_empty_source_file["spectra"].get("transmission", {},), mock_empty_source_file.get("materials", {}), None, None, None)
-    assert empty_result == (None, None, None)
+    assert isinstance(empty_result[0], StackData)
+    assert empty_result[1].size == 0
+    assert empty_result[2].size == 0
 
     transmission_result = process_spectrum_list(mock_transmission_source_file["spectra"].get("transmission", {},), mock_transmission_source_file.get("materials", {}), 410, 1, 80)
     assert isinstance(transmission_result[0], StackData)
@@ -156,21 +158,21 @@ def test_process_spectrum_list_background(mock_reflection_source_file):
 
 def test_prepare_spectrum_data_empty(mocker, mock_empty_source_file):
     empty_result = prepare_spectrum_data(mock_empty_source_file)
-    assert empty_result is None
+    assert empty_result.min_wavelength is None
+    assert empty_result.transmission_spectra.size == 0
+    assert empty_result.reflection_spectra.size == 0
 
 def test_prepare_spectrum_data_transmission(mocker, mock_transmission_source_file):
     transmission_result = prepare_spectrum_data(mock_transmission_source_file)
     assert isinstance(transmission_result, TrainingRefSpectraData)
-    assert transmission_result.reflection_spectra is None
-    assert transmission_result.reflection_stacks is None
+    assert transmission_result.reflection_spectra.size == 0
     assert isinstance(transmission_result.transmission_stacks, StackData)
     assert isinstance(transmission_result.transmission_spectra, np.ndarray)
 
 def test_prepare_spectrum_data_reflection(mocker, mock_reflection_source_file):
     reflection_result = prepare_spectrum_data(mock_reflection_source_file)
     assert isinstance(reflection_result, TrainingRefSpectraData)
-    assert reflection_result.transmission_spectra is None
-    assert reflection_result.transmission_stacks is None
+    assert reflection_result.transmission_spectra.size == 0
     assert isinstance(reflection_result.reflection_stacks, StackData)
     assert isinstance(reflection_result.reflection_spectra, np.ndarray)
 
