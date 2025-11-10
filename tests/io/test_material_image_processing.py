@@ -144,11 +144,26 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
                 "id": "mat2",
             }
         ],
+        "light_sources": [
+            {
+                "id": "D1",
+                "wl_start": 400,
+                "wl_step": 20,
+                "value": [0.5]*20
+            },
+            {
+                "id": "D2",
+                "wl_start": 400,
+                "wl_step": 20,
+                "value": [1]*20
+            }
+        ],
         "images": {
             "measurement_images": {
                 "transmission": [
                     {
                         "filename": "test.jpg",
+                        "light_source": "D1",
                         "white_refs": [mock_linrgb_processing_image_rois[3]],
                         "black_refs": [mock_linrgb_processing_image_rois[1],mock_linrgb_processing_image_rois[2]],
                         "measurement_areas": [
@@ -180,6 +195,7 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     result = parse_image_data(mock_data)
     result_stack_data = result.transmission_stacks
     result_xyz_array = result.transmission_xyz
+    result_light_array = result.transmission_light_sources
     print(result_stack_data)
     print(result_xyz_array)
     assert np.all(np.isfinite(result_xyz_array))
@@ -192,3 +208,4 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     assert result_stack_data.material_nums.shape == (4,2)
     assert result_stack_data.thicknesses.shape == (4,2)
     assert result_stack_data.stack_counts.shape == (4,)
+    assert result_light_array.shape == (4,)

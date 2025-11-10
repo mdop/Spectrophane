@@ -9,11 +9,13 @@ from dataclasses import dataclass
 from spectrophane.io.data_io import get_resource_path
 from spectrophane.core.color_transformations import linrgb_to_xyz
 from spectrophane.io.stack_io import stack_json_to_array, StackData
+from spectrophane.io.misc_data_import import parse_light_sources
 
 @dataclass
 class TrainingRefImageData():
     transmission_stacks: StackData
     transmission_xyz: np.ndarray
+    transmission_light_sources: np.ndarray
 
 def raw_to_linear_rgb(filename: str) -> np.ndarray:
     """Takes filename of the raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""
@@ -99,6 +101,13 @@ def parse_image_data(input_data):
     """Takes json material characterization file data and returns stack data arrays and a corresponding color array"""
     stack_dictlist = []
     xyz_colors = []
+    light_sources = []
+    if "light_sources" in input_data:
+        light_sources_data = parse_light_sources(input_data, 500, 10, 600)
+        light_source_ids = light_sources_data.names
+    else:
+        light_source_ids = []
+    
     for image_data in input_data["images"]["measurement_images"]["transmission"]:
         white_rois = image_data["white_refs"]
         black_rois = image_data["black_refs"]
@@ -108,6 +117,8 @@ def parse_image_data(input_data):
         xyz_imagecolors = process_image_to_xyz(image_array, white_rois, black_rois, color_rois)
         xyz_colors.extend(xyz_imagecolors)
         stack_dictlist.extend(image_stack_dictlist)
+        light_sources.extend([light_source_ids.index(image_data["light_source"])]*len(color_rois))
     xyz_array = np.array(xyz_colors)
+    light_sources_array = np.array(light_sources)
     stack_data = stack_json_to_array(input_data["materials"], stack_dictlist)
-    return TrainingRefImageData(stack_data, xyz_array)
+    return TrainingRefImageData(stack_data, xyz_array, light_sources_array)
