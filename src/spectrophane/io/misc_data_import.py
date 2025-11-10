@@ -10,7 +10,7 @@ class LightSources:
     names: Tuple[str]
     spectra: np.ndarray
 
-def parse_light_sources(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[Sequence, np.ndarray]:
+def parse_light_sources(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> LightSources:
     """Returns a tuple of light source names and a numpy array containing harmonized spectra as specified in input data"""
     if "light_sources" not in config_data:
         return LightSources((), np.array([]))
@@ -25,7 +25,7 @@ class Observers:
     names: Tuple[str]
     spectra: np.ndarray
 
-def parse_observers(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[Sequence, np.ndarray]:
+def parse_observers(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Observers:
     """Returns a tuple of observer names and a numpy array containing harmonized spectra as specified in input data"""
     if "observer" not in config_data:
         return Observers((), np.array([]))
