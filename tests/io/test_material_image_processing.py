@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import ANY
+from unittest.mock import ANY, MagicMock
 import numpy as np
 import json
 from spectrophane.io.material_image_processing import (
@@ -132,6 +132,11 @@ def test_process_image_to_xyz(mock_linrgb_processing_image_rois):
     color_rois = (mock_linrgb_processing_image_rois[4], mock_linrgb_processing_image_rois[5])
     result = process_image_to_xyz(img, white_rois, black_rois, color_rois)
     assert result.shape == (2,3)
+
+@pytest.fixture
+def mock_CIE_light_sources(mocker):
+    output = ((), np.empty((0,20)))
+    return mocker.patch("spectrophane.io.misc_data_import._import_CIE_light_sources", return_value = output)
 
 # Test parse_material_characterization_data
 def test_parse_material_characterization_data(mocker, mock_linrgb_processing_image_rois):

@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 #default data
 #TODO: customize user data dir
-USER_DATA_DIR = Path.home() / ".Spectrophane"
+USER_DATA_DIR = Path.home() / "Spectrophane"
 PACKAGE_RESOURCES_ROOT = "spectrophane.resources"
 
 USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
