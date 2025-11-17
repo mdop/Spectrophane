@@ -4,7 +4,6 @@ from numbers import Number
 import numpy as np
 from dataclasses import dataclass
 
-from spectrophane.io.data_io import get_resource_path
 from spectrophane.io.stack_io import stack_json_to_array, StackData
 
 @dataclass

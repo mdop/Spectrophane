@@ -30,7 +30,6 @@ def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.nda
     else:
         MD = jnp
     factor = MD.trapezoid(light_source * observer[1], None, step_wavelength)
-    print(factor)
     return factor
     
 
@@ -45,6 +44,5 @@ def spectrum_to_xyz(material_spectrum: np.ndarray | jnp.ndarray, light_source: n
     excitation_spectrum = detector_spectrum[MD.newaxis, :] * observer
     if normalization_factor is None:
         normalization_factor = compute_spectrum_xyz_normalization_factor(light_source, observer, step_wavelength)
-    print(excitation_spectrum)
     xyz = MD.trapezoid(excitation_spectrum, None, dx=step_wavelength, axis=1).flatten() / normalization_factor
     return xyz
