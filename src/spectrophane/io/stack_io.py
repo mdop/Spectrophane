@@ -1,14 +1,7 @@
 from typing import Sequence, Dict
 import numpy as np
-from dataclasses import dataclass
 
-@dataclass
-class StackData():
-    """Dataclass that contains all relevant data for material stack representation"""
-    material_list: Sequence[Dict]
-    material_nums: np.ndarray
-    thicknesses: np.ndarray
-    stack_counts: np.ndarray
+from spectrophane.core.dataclasses import StackData
 
 def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict]) -> StackData:
     """Takes a material list and a list of material names + thicknesses and morphs them into a padded numpy material and thickness, and a stacklength array."""

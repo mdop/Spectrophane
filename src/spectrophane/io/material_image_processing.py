@@ -2,20 +2,15 @@ import rawpy
 import numpy as np
 from PIL import Image
 from pathlib import Path
-import json
 from typing import Sequence, Callable
-from dataclasses import dataclass
 
+from spectrophane.core.dataclasses import TrainingRefImageData
 from spectrophane.io.data_io import get_resource_path
 from spectrophane.core.color_transformations import linrgb_to_xyz
-from spectrophane.io.stack_io import stack_json_to_array, StackData
+from spectrophane.io.stack_io import stack_json_to_array
 from spectrophane.io.misc_data_import import parse_light_sources
 
-@dataclass
-class TrainingRefImageData():
-    transmission_stacks: StackData
-    transmission_xyz: np.ndarray
-    transmission_light_source_indexes: np.ndarray
+
 
 def raw_to_linear_rgb(filename: str) -> np.ndarray:
     """Takes filename of the raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""

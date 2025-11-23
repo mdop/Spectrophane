@@ -1,9 +1,8 @@
 import numpy as np
 from numbers import Number
 from typing import Tuple
-from dataclasses import dataclass
-import csv
 
+from spectrophane.core.dataclasses import LightSources, Observers
 from spectrophane.io.data_io import get_resource_path, get_json_resource
 from spectrophane.io.material_spectrum_processing import reshape_spectrum
 
@@ -39,12 +38,6 @@ def _import_CIE_observers(min_wavelength: Number, step_wavelength: Number, spect
         intensities[i,2] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,3], min_wavelength, step_wavelength, spectrum_length)
     return tuple(ids), intensities
 
-
-@dataclass
-class LightSources:
-    names: Tuple[str]
-    spectra: np.ndarray
-
 def parse_light_sources(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> LightSources:
     """Returns a tuple of light source names and a numpy array containing harmonized spectra as specified in input data"""
     default_ids, default_intensities = _import_CIE_light_sources(min_wavelength, step_wavelength, spectrum_length)
@@ -55,11 +48,6 @@ def parse_light_sources(config_data: dict, min_wavelength: Number, step_waveleng
     for i, source in enumerate(config_data["light_sources"]):
         output_arr[i, :] = reshape_spectrum(source["wl_start"], source["wl_step"], source["value"], min_wavelength, step_wavelength, spectrum_length)
     return LightSources(default_ids + source_names, np.vstack([default_intensities, output_arr]))
-
-@dataclass
-class Observers:
-    names: Tuple[str]
-    spectra: np.ndarray
 
 def parse_observers(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Observers:
     """Returns a tuple of observer names and a numpy array containing harmonized spectra as specified in input data"""

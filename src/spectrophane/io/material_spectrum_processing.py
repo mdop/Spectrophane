@@ -1,21 +1,9 @@
-import json
 from typing import Dict, Tuple, Sequence
 from numbers import Number
 import numpy as np
-from dataclasses import dataclass
 
+from spectrophane.core.dataclasses import TrainingRefSpectraData
 from spectrophane.io.stack_io import stack_json_to_array, StackData
-
-@dataclass
-class TrainingRefSpectraData:
-    transmission_stacks: StackData
-    transmission_spectra: np.ndarray
-    reflection_stacks: StackData
-    reflection_spectra: np.ndarray
-    reflection_background: np.ndarray
-    min_wavelength: Number
-    step_wavelength: Number
-    fallback_spectrumlength: Number
 
 
 def get_common_wavelength_space(min_wavelengths: Sequence[Number], step_wavelengths: Sequence[Number], spectrum_lengths: Sequence[int]) -> Tuple[Number, Number, int] | Tuple[None, None, None]:
