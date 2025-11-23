@@ -200,7 +200,7 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     result = parse_image_data(mock_data)
     result_stack_data = result.transmission_stacks
     result_xyz_array = result.transmission_xyz
-    result_light_array = result.transmission_light_sources
+    result_light_array = result.transmission_light_source_indexes
     print(result_stack_data)
     print(result_xyz_array)
     assert np.all(np.isfinite(result_xyz_array))
