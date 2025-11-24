@@ -1,7 +1,8 @@
 import numpy as np
 from unittest.mock import MagicMock
 
-from spectrophane.io.misc_data_import import parse_light_sources, parse_observers, LightSources, Observers
+from spectrophane.io.misc_data_import import parse_light_sources, parse_observers
+from spectrophane.core.dataclasses import LightSources, Observers
 
 
 import pytest
@@ -23,11 +24,8 @@ def mock_get_json_resource(mocker):
     return mocker.patch("spectrophane.io.misc_data_import.get_json_resource", return_value=mock_data)
 
 @pytest.fixture
-def mock_get_resource_path(mocker):
-    return mocker.patch(
-        "spectrophane.io.data_io.get_resource_path",
-        side_effect=lambda path: f"mocked/{path}"  # optional: preserve input
-    )
+def mock_get_path(mocker):
+    return mocker.patch("spectrophane.io.misc_data_import.get_resource_path", return_value = True)
 
 @pytest.fixture
 def mock_csv_loadtext_light_source(mocker):
@@ -44,7 +42,7 @@ def mock_reshape_spectrum_light_source(mocker):
         return_value=np.array([1.0, 2.0, 3.0])
     )
 
-def test_import_CIE_light_sources(mock_get_json_resource, mock_csv_loadtext_light_source, mock_reshape_spectrum_light_source):
+def test_import_CIE_light_sources(mock_get_json_resource, mock_get_path, mock_csv_loadtext_light_source, mock_reshape_spectrum_light_source):
     min_wavelength = 380.0
     step_wavelength = 5.0
     spectrum_length = 3
@@ -58,7 +56,7 @@ def test_import_CIE_light_sources(mock_get_json_resource, mock_csv_loadtext_ligh
     ])
     assert np.allclose(intensities, expected_intensities, 0.01)
 
-def test_import_CIE_light_csv_import(mock_get_json_resource, mock_csv_loadtext_light_source):
+def test_import_CIE_light_csv_import(mock_get_json_resource, mock_get_path, mock_csv_loadtext_light_source):
     min_wavelength = 300
     step_wavelength = 5.0
     spectrum_length = 4
@@ -97,7 +95,7 @@ def mock_reshape_spectrum_observers(mocker):
         return_value=np.array([1.0, 2.0, 3.0])
     )
 
-def test_import_CIE_observers(mock_get_json_resource, mock_csv_loadtext_observers, mock_reshape_spectrum_observers):
+def test_import_CIE_observers(mock_get_json_resource, mock_get_path, mock_csv_loadtext_observers, mock_reshape_spectrum_observers):
     min_wavelength = 380.0
     step_wavelength = 5.0
     spectrum_length = 3
@@ -111,7 +109,7 @@ def test_import_CIE_observers(mock_get_json_resource, mock_csv_loadtext_observer
     ])
     assert np.allclose(intensities, expected_intensities, 0.01)
 
-def test_import_CIE_observers_csv_import(mock_get_json_resource, mock_csv_loadtext_observers):
+def test_import_CIE_observers_csv_import(mock_get_json_resource, mock_get_path, mock_csv_loadtext_observers):
     min_wavelength = 300
     step_wavelength = 5.0
     spectrum_length = 4

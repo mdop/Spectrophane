@@ -15,7 +15,10 @@ def _import_CIE_light_sources(min_wavelength: Number, step_wavelength: Number, s
     for i, (id, filename) in enumerate(CIE_metadata["light_sources"].items()):
         ids[i] = id
         #parse and reshape intensities
-        data = np.loadtxt(get_resource_path("CIE/" + filename), delimiter=",", dtype=np.float32)
+        resource_path = get_resource_path("CIE/" + filename)
+        if get_resource_path("CIE/" + filename) is None:
+            raise FileNotFoundError(f"Could not find CIE/{filename}. It seems the installation script did not run properly. Need external data from CIE.")
+        data = np.loadtxt(resource_path, delimiter=",", dtype=np.float32)
         raw_min_wavelength = data[0,0]
         raw_step_wavelength = data[1,0] - data[0,0]
         intensities[i] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,1], min_wavelength, step_wavelength, spectrum_length)
@@ -26,11 +29,13 @@ def _import_CIE_observers(min_wavelength: Number, step_wavelength: Number, spect
     CIE_metadata = get_json_resource("CIE/data.json")
     ids = [""] * len(CIE_metadata["observers"])
     intensities = np.zeros((len(CIE_metadata["observers"]), 3, spectrum_length))
-    print(intensities)
     for i, (id, filename) in enumerate(CIE_metadata["observers"].items()):
         ids[i] = id
         #parse and reshape intensities
-        data = np.loadtxt(get_resource_path("CIE/" + filename), delimiter=",", dtype=np.float32)
+        resource_path = get_resource_path("CIE/" + filename)
+        if get_resource_path("CIE/" + filename) is None:
+            raise FileNotFoundError(f"Could not find CIE/{filename}. It seems the installation script did not run properly. Need external data from CIE.")
+        data = np.loadtxt(resource_path, delimiter=",", dtype=np.float32)
         raw_min_wavelength = data[0,0]
         raw_step_wavelength = data[1,0] - data[0,0]
         intensities[i,0] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,1], min_wavelength, step_wavelength, spectrum_length)
