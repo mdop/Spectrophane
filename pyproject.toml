@@ -26,6 +26,7 @@ dev = [
     "pytest",
     "pytest-mock",
     "rawpy",
+    "optax",
 ]
 
 ###rawpy

@@ -20,5 +20,5 @@ def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict
             thicknesses[i, j] = layer_data["d"]
         lengths[i] = len(stack)
 
-    stack_data = StackData(material_list, material_nums, thicknesses, lengths)
+    stack_data = StackData(material_nums, thicknesses, lengths)
     return stack_data

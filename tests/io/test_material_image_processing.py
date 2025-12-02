@@ -209,7 +209,6 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
     assert np.all(np.isfinite(result_stack_data.stack_counts))
     assert result_xyz_array.shape == (4,3)
     assert isinstance(result_stack_data, StackData)
-    assert len(result_stack_data.material_list) == 2
     assert result_stack_data.material_nums.shape == (4,2)
     assert result_stack_data.thicknesses.shape == (4,2)
     assert result_stack_data.stack_counts.shape == (4,)
