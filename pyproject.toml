@@ -48,6 +48,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = ["dev_tools*"]
 
 [tool.setuptools.package-data]
 "spectrophane.resources" = ["**/*"]

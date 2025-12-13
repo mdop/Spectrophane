@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: sanitize-images
+        name: Sanitize image metadata
+        entry: python dev_tools/sanitize_images.py
+        language: system
+        files: '\.(jpg|jpeg|tiff|tif|png|cr2|cr3|nef|arw|rw2|dng|orf|raf)$'
+        pass_filenames: false
