@@ -60,3 +60,13 @@ class MaterialParams:
     
     # Meta info
     model_type: Optional[str] = None  # "kubelka_munk", "saunderson", "monte_carlo"
+
+
+@dataclass(frozen=True)
+class SpectralBlock:
+    wavelengths: np.ndarray
+    values: np.ndarray
+    material_id: str
+    material_name: str
+    plotcolor: str
+    parameter: str  # e.g. "absorption", "scattering"

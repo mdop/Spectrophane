@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib",
     "pillow",
     "importlib",
+    "plotly",
 ]
 
 [project.optional-dependencies]

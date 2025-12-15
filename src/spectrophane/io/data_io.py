@@ -42,3 +42,11 @@ def get_json_resource(project_resource_path: str) -> dict:
     with open(total_path, "r") as file:
         data = json.load(file)
     return data
+
+def write_json_resource(project_resource_path: str, data, no_overwrite: bool = True):
+    """Takes a path relative to the project resource root and writes data to it in json format. If no_overwrite then the function raises a FileExistsError if the file already exists"""
+    total_path = get_user_resource_path(project_resource_path)
+    if(total_path.exists() and no_overwrite):
+        raise FileExistsError("A file with the specified name already exists, but no overwrite was allowed!")
+    with open(total_path, "w") as file:
+        json.dump(data, file, indent=4)
