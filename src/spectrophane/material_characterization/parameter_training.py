@@ -7,7 +7,7 @@ import optax
 
 from spectrophane.core.dataclasses import MaterialParams
 from spectrophane.core.color_transformations import spectrum_to_xyz
-from spectrophane.core.transformations import jaxify
+from spectrophane.core.forward_jax import jaxify
 from spectrophane.io.data_io import get_json_resource
 from spectrophane.io.material_spectrum_processing import TrainingRefSpectraData, prepare_spectrum_data
 from spectrophane.io.material_image_processing import TrainingRefImageData, parse_image_data
@@ -18,6 +18,10 @@ from spectrophane.material_characterization.mix_theories import BaseTheory, THEO
 
 #jax prevents 64 bit arrays if not explicitly specified
 jax.config.update('jax_enable_x64', True)
+
+# Register backend-neutral dataclasses with JAX at this JAX boundary.
+from spectrophane.core.forward_jax import register_with_jax
+register_with_jax()
 
 
 def import_test_data(filename: str) -> Tuple[TrainingRefSpectraData, TrainingRefImageData]:

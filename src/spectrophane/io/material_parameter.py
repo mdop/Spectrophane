@@ -93,6 +93,7 @@ def save_parameter(resource_path: str, material_data: list, parameter: MaterialP
             param_dict[field.name] = value.tolist()
         else:
             param_dict[field.name] = value
+    #################TODO: add wavelength data!
     write_json_resource(resource_path, result, no_overwrite)
     
 
