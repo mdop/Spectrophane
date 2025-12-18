@@ -3,14 +3,14 @@ import numpy as np
 import json
 import copy
 from unittest.mock import ANY
-from spectrophane.io.material_spectrum_processing import (
+from spectrophane.training.ingest_spectra import (
         get_common_wavelength_space,
         reshape_spectrum,
         process_spectrum_list,
         prepare_spectrum_data,
         TrainingRefSpectraData
 )
-from spectrophane.io.stack_io import StackData
+from spectrophane.training.ingest_stacks import StackData
 
 @pytest.fixture
 def mock_empty_source_file():

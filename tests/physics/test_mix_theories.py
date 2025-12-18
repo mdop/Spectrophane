@@ -3,7 +3,7 @@ import jax
 import pytest
 import copy
 
-from spectrophane.material_characterization.mix_theories import KubelkaMunk
+from spectrophane.physics.mix_theories import KubelkaMunk
 from spectrophane.core.dataclasses import StackData, MaterialParams
 
 jax.config.update('jax_enable_x64', True)

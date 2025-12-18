@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import dataclasses
 
 from spectrophane.core.dataclasses import MaterialParams, SpectralBlock
-from spectrophane.io.data_io import write_json_resource
+from spectrophane.io.resources import write_json_resource
 
 
 def color_str(rgb: jnp.ndarray):

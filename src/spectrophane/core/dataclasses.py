@@ -29,7 +29,7 @@ class StackData:
 
 @dataclass
 class TrainingRefSpectraData:
-    """Dataclass containing reference spectra and stack data for training.
+    """Dataclass containing reference spectra and corresponding stack data for training.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     transmission_stacks: StackData
     transmission_spectra: np.ndarray
@@ -42,7 +42,7 @@ class TrainingRefSpectraData:
 
 @dataclass
 class TrainingRefImageData:
-    """Dataclass containing reference image data and stack information for training.
+    """Dataclass containing reference image data and corresponding stack information for training.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     transmission_stacks: StackData
     transmission_xyz: np.ndarray

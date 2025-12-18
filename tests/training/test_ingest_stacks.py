@@ -1,5 +1,5 @@
 import pytest
-from spectrophane.io.stack_io import stack_json_to_array, StackData
+from spectrophane.training.ingest_stacks import stack_json_to_array, StackData
 import numpy as np
 
 def test_stack_json_to_array():

@@ -3,8 +3,8 @@ import pytest
 import jax.numpy as jnp
 import jax
 
-from spectrophane.material_characterization.parameter_training import compute_loss, train_parameter, initialize_parameter
-from spectrophane.material_characterization.mix_theories import BaseTheory
+from spectrophane.training.trainer import compute_loss, train_parameter, initialize_parameter
+from spectrophane.physics.mix_theories import BaseTheory
 from spectrophane.core.dataclasses import TrainingRefImageData, TrainingRefSpectraData, StackData, MaterialParams
 
 # Mock classes for testing
@@ -86,7 +86,7 @@ def test_train_parameter_initialization(mocker, mock_model, mock_ref_image_data,
     light_sources = mock_light_sources.data
     CIE1931 = mock_cie1931.data
 
-    mocker.patch.dict("spectrophane.material_characterization.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
+    mocker.patch.dict("spectrophane.physics.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
     parameter = train_parameter("mock_model", 2, 400, 40, 10, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931)
     assert parameter is not None, "Training should return a parameter"
 
@@ -95,7 +95,7 @@ def test_train_parameter_parameters_update(mocker, mock_model, mock_ref_image_da
     light_sources = mock_light_sources.data
     CIE1931 = mock_cie1931.data
 
-    mocker.patch.dict("spectrophane.material_characterization.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
+    mocker.patch.dict("spectrophane.physics.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
     start_params = initialize_parameter("mock_model", 2, 400, 40, 10)
 
     # Mock the compute_loss and gradient functions to ensure parameters change

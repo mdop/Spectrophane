@@ -2,8 +2,8 @@ import numpy as np
 import jax.numpy as jnp
 import jax
 
-from spectrophane.core.color_transformations import linrgb_to_xyz, spectrum_to_xyz
-from spectrophane.io.misc_data_import import _import_CIE_light_sources, _import_CIE_observers
+from spectrophane.color.conversions import linrgb_to_xyz, spectrum_to_xyz
+from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 
 def test_linrgb_to_xyz_single():
     rgb = np.random.rand(3)

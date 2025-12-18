@@ -6,21 +6,21 @@ from jax import jit
 import optax
 
 from spectrophane.core.dataclasses import MaterialParams
-from spectrophane.core.color_transformations import spectrum_to_xyz
-from spectrophane.core.forward_jax import jaxify
-from spectrophane.io.data_io import get_json_resource
-from spectrophane.io.material_spectrum_processing import TrainingRefSpectraData, prepare_spectrum_data
-from spectrophane.io.material_image_processing import TrainingRefImageData, parse_image_data
-from spectrophane.io.misc_data_import import parse_light_sources, parse_observers
+from spectrophane.color.conversions import spectrum_to_xyz
+from spectrophane.core.jax_utils import jaxify
+from spectrophane.io.resources import get_json_resource
+from spectrophane.training.ingest_spectra import TrainingRefSpectraData, prepare_spectrum_data
+from spectrophane.training.ingest_images import TrainingRefImageData, parse_image_data
+from spectrophane.color.spectral_helper import parse_light_sources, parse_observers
 
 
-from spectrophane.material_characterization.mix_theories import BaseTheory, THEORY_REGISTRY
+from spectrophane.physics.mix_theories import BaseTheory, THEORY_REGISTRY
 
 #jax prevents 64 bit arrays if not explicitly specified
 jax.config.update('jax_enable_x64', True)
 
 # Register backend-neutral dataclasses with JAX at this JAX boundary.
-from spectrophane.core.forward_jax import register_with_jax
+from spectrophane.core.jax_utils import register_with_jax
 register_with_jax()
 
 

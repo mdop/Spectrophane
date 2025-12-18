@@ -6,7 +6,7 @@ import os
 import json
 from pathlib import Path
 from dataclasses import dataclass
-from spectrophane.io.material_parameter import print_color_comparison, color_str, save_parameter, extract_spectral_blocks, plot_parameter
+from spectrophane.training.material_parameter import print_color_comparison, color_str, save_parameter, extract_spectral_blocks, plot_parameter
 from spectrophane.core.dataclasses import SpectralBlock
 
 
@@ -123,7 +123,7 @@ def test_save_parameter(tmpdir, mocker):
     parameter = MaterialParams(param1=10, param2=3.14, param3=jnp.array([1.0, 2.0, 3.0]))
     filename = os.path.join(tmpdir, "test_params.json")
     no_overwrite = True
-    mocker.patch("spectrophane.io.data_io.get_user_resource_path", return_value=Path(filename))
+    mocker.patch("spectrophane.io.resources.get_user_resource_path", return_value=Path(filename))
 
     # Act
     save_parameter(filename, material_data, parameter, no_overwrite)
@@ -143,7 +143,7 @@ def test_save_parameter_overwrite(tmpdir, mocker):
     parameter = MaterialParams(param1=10, param2=3.14, param3=jnp.array([1.0, 2.0, 3.0]))
     filename = os.path.join(tmpdir, "test_params.json")
     no_overwrite = False
-    mocker.patch("spectrophane.io.data_io.get_user_resource_path", return_value=Path(filename))
+    mocker.patch("spectrophane.io.resources.get_user_resource_path", return_value=Path(filename))
 
     save_parameter(filename, material_data, parameter, no_overwrite)
     parameter.param1 = 20

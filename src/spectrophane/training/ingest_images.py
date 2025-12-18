@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Sequence, Callable
 
 from spectrophane.core.dataclasses import TrainingRefImageData
-from spectrophane.io.data_io import get_resource_path
-from spectrophane.core.color_transformations import linrgb_to_xyz
-from spectrophane.io.stack_io import stack_json_to_array
-from spectrophane.io.misc_data_import import parse_light_sources
+from spectrophane.io.resources import get_resource_path
+from spectrophane.color.conversions import linrgb_to_xyz
+from spectrophane.training.ingest_stacks import stack_json_to_array
+from spectrophane.color.spectral_helper import parse_light_sources
 
 
 

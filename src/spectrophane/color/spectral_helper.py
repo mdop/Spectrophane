@@ -3,8 +3,8 @@ from numbers import Number
 from typing import Tuple
 
 from spectrophane.core.dataclasses import LightSources, Observers
-from spectrophane.io.data_io import get_resource_path, get_json_resource
-from spectrophane.io.material_spectrum_processing import reshape_spectrum
+from spectrophane.io.resources import get_resource_path, get_json_resource
+from spectrophane.training.ingest_spectra import reshape_spectrum
 
 
 def _import_CIE_light_sources(min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[str]:

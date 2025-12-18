@@ -3,7 +3,7 @@ from numbers import Number
 import numpy as np
 
 from spectrophane.core.dataclasses import TrainingRefSpectraData
-from spectrophane.io.stack_io import stack_json_to_array, StackData
+from spectrophane.training.ingest_stacks import stack_json_to_array, StackData
 
 
 def get_common_wavelength_space(min_wavelengths: Sequence[Number], step_wavelengths: Sequence[Number], spectrum_lengths: Sequence[int]) -> Tuple[Number, Number, int] | Tuple[None, None, None]:

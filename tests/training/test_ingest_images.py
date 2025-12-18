@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import ANY, MagicMock
 import numpy as np
 import json
-from spectrophane.io.material_image_processing import (
+from spectrophane.training.ingest_images import (
     raw_to_linear_rgb,
     decode_rgb_img,
     rgb_image_to_linrgb,
@@ -14,7 +14,7 @@ from spectrophane.io.material_image_processing import (
     process_image_to_xyz,
     parse_image_data
 )
-from spectrophane.io.stack_io import StackData
+from spectrophane.training.ingest_stacks import StackData
 
 # Fixtures for common test cases
 @pytest.fixture
@@ -53,7 +53,7 @@ def test_raw_to_linear_rgb(mocker, mock_raw_image):
     mock_raw.postprocess.return_value = (mock_raw_image * 65535).astype(np.uint16)
 
     mocker.patch('rawpy.imread', return_value=mock_raw)
-    mocker.patch('spectrophane.io.material_image_processing.get_resource_path', return_value='/fake/path/test.raw')
+    mocker.patch('spectrophane.training.ingest_images.get_resource_path', return_value='/fake/path/test.raw')
     result = raw_to_linear_rgb('test.raw')
 
     mock_raw.postprocess.assert_called_once_with(
@@ -74,9 +74,9 @@ def test_decode_rgb_img(mock_rgb_image):
 
 # Test image_to_linrgb
 def test_rgb_image_to_linrgb(mocker, mock_rgb_image):
-    mock_get_resource_path = mocker.patch('spectrophane.io.material_image_processing.get_resource_path', return_value='/fake/path/test.raw')
+    mock_get_resource_path = mocker.patch('spectrophane.training.ingest_images.get_resource_path', return_value='/fake/path/test.raw')
     mock_image_open = mocker.patch('PIL.Image.open', return_value=mock_rgb_image)
-    mock_decode_rgb_img = mocker.patch('spectrophane.io.material_image_processing.decode_rgb_img', return_value=mock_rgb_image)
+    mock_decode_rgb_img = mocker.patch('spectrophane.training.ingest_images.decode_rgb_img', return_value=mock_rgb_image)
     
     result = rgb_image_to_linrgb("rest.raw")
     
@@ -90,8 +90,8 @@ def test_rgb_image_to_linrgb(mocker, mock_rgb_image):
 # Test import_image
 @pytest.mark.parametrize("extension,type", [("jnp", "raw"), ("jpg", "rgb"), ("raw", "raw"), ("png", "rgb"), ("jpeg", "rgb")])
 def test_import_image(mocker, mock_raw_image, extension, type):
-    mock_raw_import = mocker.patch('spectrophane.io.material_image_processing.raw_to_linear_rgb', return_value=mock_raw_image)
-    mock_rgb_import = mocker.patch('spectrophane.io.material_image_processing.rgb_image_to_linrgb', return_value=mock_raw_image)
+    mock_raw_import = mocker.patch('spectrophane.training.ingest_images.raw_to_linear_rgb', return_value=mock_raw_image)
+    mock_rgb_import = mocker.patch('spectrophane.training.ingest_images.rgb_image_to_linrgb', return_value=mock_raw_image)
 
     result = result = import_image("test." + extension)
 
@@ -195,7 +195,7 @@ def test_parse_material_characterization_data(mocker, mock_linrgb_processing_ima
         }
     }
     mock_file = mocker.mock_open(read_data=json.dumps(mock_data))
-    mocker.patch("spectrophane.io.material_image_processing.import_image", return_value=mock_linrgb_processing_image_rois[0])
+    mocker.patch("spectrophane.training.ingest_images.import_image", return_value=mock_linrgb_processing_image_rois[0])
     
     result = parse_image_data(mock_data)
     result_stack_data = result.transmission_stacks

@@ -3,7 +3,7 @@ import sys
 import pathlib
 import urllib.request
 
-from spectrophane.io.data_io import USER_DATA_DIR
+from spectrophane.io.resources import USER_DATA_DIR
 
 # List of CC BY-SA CIE CSV resources you want to download
 CIE_CSV_URLS = [

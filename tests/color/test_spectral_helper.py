@@ -1,13 +1,13 @@
 import numpy as np
 from unittest.mock import MagicMock
 
-from spectrophane.io.misc_data_import import parse_light_sources, parse_observers
+from spectrophane.color.spectral_helper import parse_light_sources, parse_observers
 from spectrophane.core.dataclasses import LightSources, Observers
 
 
 import pytest
 import numpy as np
-from spectrophane.io.misc_data_import import _import_CIE_light_sources, _import_CIE_observers
+from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 
 @pytest.fixture
 def mock_get_json_resource(mocker):
@@ -21,11 +21,11 @@ def mock_get_json_resource(mocker):
             "source4": "file4.csv"
         }
     }
-    return mocker.patch("spectrophane.io.misc_data_import.get_json_resource", return_value=mock_data)
+    return mocker.patch("spectrophane.color.spectral_helper.get_json_resource", return_value=mock_data)
 
 @pytest.fixture
 def mock_get_path(mocker):
-    return mocker.patch("spectrophane.io.misc_data_import.get_resource_path", return_value = True)
+    return mocker.patch("spectrophane.color.spectral_helper.get_resource_path", return_value = True)
 
 @pytest.fixture
 def mock_csv_loadtext_light_source(mocker):
@@ -38,7 +38,7 @@ def mock_csv_loadtext_light_source(mocker):
 @pytest.fixture
 def mock_reshape_spectrum_light_source(mocker):
     return mocker.patch(
-        "spectrophane.io.misc_data_import.reshape_spectrum",
+        "spectrophane.color.spectral_helper.reshape_spectrum",
         return_value=np.array([1.0, 2.0, 3.0])
     )
 
@@ -91,7 +91,7 @@ def mock_csv_loadtext_observers(mocker):
 @pytest.fixture
 def mock_reshape_spectrum_observers(mocker):
     return mocker.patch(
-        "spectrophane.io.misc_data_import.reshape_spectrum",
+        "spectrophane.color.spectral_helper.reshape_spectrum",
         return_value=np.array([1.0, 2.0, 3.0])
     )
 
@@ -136,7 +136,7 @@ def test_import_CIE_observers_empty_light_sources(mock_get_json_resource, mock_c
 @pytest.fixture
 def mock_CIE_light_sources(mocker):
     output = (("D1", "D2"), np.array([[1.0]*100]*2))
-    return mocker.patch("spectrophane.io.misc_data_import._import_CIE_light_sources", return_value = output)
+    return mocker.patch("spectrophane.color.spectral_helper._import_CIE_light_sources", return_value = output)
 
 def test_parse_light_sources(mock_CIE_light_sources):
     data = {
