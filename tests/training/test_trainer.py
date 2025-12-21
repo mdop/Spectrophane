@@ -6,19 +6,27 @@ import jax
 from spectrophane.training.trainer import compute_loss, train_parameter, initialize_parameter
 from spectrophane.physics.mix_theories import BaseTheory
 from spectrophane.core.dataclasses import TrainingRefImageData, TrainingRefSpectraData, StackData, MaterialParams
+from spectrophane.core.numeric_backend import Backend, NumPyBackend, JAXBackend
 
 # Mock classes for testing
 class MockTheory(BaseTheory):
+    def __init__(self, backend: str):
+        if(backend == "jax"):
+            self.bn = JAXBackend()
+        else:
+            self.bn = NumPyBackend()
+        self.xp = self.bn.xp
+    
     def initial_guess(self, material_count, min_wavelength, step_wavelength, spectrum_length):
         """Return an OpticalParams object as initial values."""
-        return MaterialParams(jnp.ones((material_count, spectrum_length)),jnp.ones((material_count, spectrum_length)), "mock_model")
+        return MaterialParams(jnp.ones((material_count, spectrum_length)),self.xp.ones((material_count, spectrum_length)), "mock_model")
     
     def transmission(self, stacks, parameter):
         #return jnp.ones((10,))
         return parameter.absorption_coeff[0]+parameter.scattering_coeff[0]
 
     def reflection(self, stacks, parameter, background):
-        return jnp.ones((10,))
+        return self.xp.ones((10,))
 
 class MockRefImageData(TrainingRefImageData):
     def __init__(self):
@@ -45,7 +53,7 @@ class MockCIE1931:
 # Test fixtures
 @pytest.fixture
 def mock_model():
-    return MockTheory()
+    return MockTheory
 
 @pytest.fixture
 def mock_ref_image_data():
@@ -70,7 +78,7 @@ def test_compute_loss(mock_model, mock_ref_image_data, mock_ref_spectrum_data, m
     CIE1931 = mock_cie1931.data
 
     loss = compute_loss(
-        model=mock_model,
+        model=mock_model("jax"),
         parameter=parameter,
         ref_image_data=mock_ref_image_data,
         ref_spectrum_data=mock_ref_spectrum_data,

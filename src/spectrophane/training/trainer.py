@@ -65,7 +65,7 @@ def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: Trai
 
 def train_parameter(model_name: str, material_count, min_wavelength, step_wavelength, spectrum_length, image_ref, spectra_ref, light_sources, CIE1931, num_steps=10, lr=1e-1):
     losses = [0.0]*num_steps
-    model = THEORY_REGISTRY[model_name]
+    model = THEORY_REGISTRY[model_name]("jax")
     parameter = initialize_parameter(model, material_count, min_wavelength, step_wavelength, spectrum_length)
 
     optimizer = optax.adam(lr)
