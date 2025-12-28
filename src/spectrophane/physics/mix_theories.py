@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-import jax
+import numpy as np
 
 from spectrophane.core.dataclasses import StackData, MaterialParams
 from spectrophane.core.numeric_backend import Backend, NumPyBackend, JAXBackend
@@ -44,7 +44,7 @@ class KubelkaMunk(BaseTheory):
     def __init__(self, backend: str):
         super().__init__(backend)
     
-    def _single_layer_transfer_matrix(self, K: jnp.ndarray, S: jnp.ndarray, d: jnp.ndarray) -> jnp.ndarray:
+    def _single_layer_transfer_matrix(self, K: jnp.ndarray | np.ndarray, S: jnp.ndarray | np.ndarray, d: jnp.ndarray | np.ndarray) -> jnp.ndarray | np.ndarray:
         """Returns the transfer matrix of a single layer. Arrays should be of float64 to prevent numerical instability."""
         a=(K+S)/S
         b=self.bn.sqrt(self.bn.square(a)-1)
@@ -63,7 +63,7 @@ class KubelkaMunk(BaseTheory):
         I = self.bn.identity_transfer(2, K.shape[0], M.dtype)
         return self.bn.where(is_zero, I, M)
     
-    def _chain_transfer_matrizes(self, transfer_matrizes: jnp.ndarray, top_to_bottom: bool = True) -> jnp.ndarray:
+    def _chain_transfer_matrizes(self, transfer_matrizes: jnp.ndarray | np.ndarray, top_to_bottom: bool = True) -> jnp.ndarray | np.ndarray:
         """Multiplies transfer matrices for a stack to get a global transfer matrix. If top_to_bottom multiplication will stack for (I+(k), I-(k)) = M (I+(0), I-(0)). Matrix shape (matrizes, 2, 2, wavelengths)"""
         if top_to_bottom:
             transfer_matrizes = transfer_matrizes[::-1]
@@ -81,7 +81,7 @@ class KubelkaMunk(BaseTheory):
         M_total = self.bn.vmap(chain_one_wavelength, in_axes=-1, out_axes=2)(transfer_matrizes) # shape (2,2,wavelength)
         return M_total
     
-    def _stack_transfer_matrix(self, stack: StackData, params: MaterialParams) -> jnp.ndarray:
+    def _stack_transfer_matrix(self, stack: StackData, params: MaterialParams) -> jnp.ndarray | np.ndarray:
         """Calculates transfer matrix for a given stack (characterized by index and stack) and fundamental material parameters. The transfer matrix can be used to calculate reflection and transmission spectra."""
         material_ids = stack.material_nums
         thicknesses = stack.thicknesses
@@ -105,7 +105,7 @@ class KubelkaMunk(BaseTheory):
         T = M[0,0] - M[0,1]*M[1,0]/M[1,1]
         return T
     
-    def reflection(self, stack: StackData, params: MaterialParams, backing: jnp.ndarray):
+    def reflection(self, stack: StackData, params: MaterialParams, backing: jnp.ndarray | np.ndarray):
         """Calculates reflection spectrum of a material stack. Returns a spectrum array in the shape (wavelengths,)"""
         M = self._stack_transfer_matrix(stack, params)
         R = (backing*M[0,0] + M[0,1]) / (backing*M[1,0] + M[1,1])
