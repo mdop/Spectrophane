@@ -28,6 +28,13 @@ class StackData:
     stack_counts: np.ndarray
 
 @dataclass
+class StackCandidates(StackData):
+    """
+    Dataclass describing StackData with additional metadata for scoring of fitness. Score is in range 0..1
+    """
+    score: np.ndarray
+
+@dataclass
 class TrainingRefSpectraData:
     """Dataclass containing reference spectra and corresponding stack data for training.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
@@ -60,11 +67,3 @@ class MaterialParams:
     model_type: Optional[str] = None  # "kubelka_munk", "saunderson", "monte_carlo"
 
 
-@dataclass(frozen=True)
-class SpectralBlock:
-    wavelengths: np.ndarray
-    values: np.ndarray
-    material_id: str
-    material_name: str
-    plotcolor: str
-    parameter: str  # e.g. "absorption", "scattering"
