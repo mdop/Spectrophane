@@ -26,6 +26,12 @@ class StackData:
     material_nums: np.ndarray
     thicknesses: np.ndarray
     stack_counts: np.ndarray
+    def take(self, indices: np.ndarray) -> "StackData":
+        return StackData(
+            material_nums=self.material_nums[indices],
+            thicknesses=self.thicknesses[indices],
+            stack_counts=self.stack_counts[indices],
+        )
 
 @dataclass
 class StackCandidates(StackData):
