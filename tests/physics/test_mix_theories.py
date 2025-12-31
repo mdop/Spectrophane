@@ -4,10 +4,14 @@ import jax
 import pytest
 import copy
 
-from spectrophane.physics.mix_theories import KubelkaMunk
+from spectrophane.physics.mix_theories import THEORY_REGISTRY, KubelkaMunk
 from spectrophane.core.dataclasses import StackData, MaterialParams
 
 jax.config.update('jax_enable_x64', True)
+
+def test_theory_registry():
+    assert "kubelka_munk" in THEORY_REGISTRY
+    assert isinstance(THEORY_REGISTRY["kubelka_munk"]("jax"), KubelkaMunk)
 
 @pytest.fixture(params=["jax", "numpy"])
 def backend(request):

@@ -4,19 +4,6 @@ import numpy as np
 from spectrophane.core.dataclasses import StackData, MaterialParams
 from spectrophane.core.numeric_backend import Backend, NumPyBackend, JAXBackend
 
-THEORY_REGISTRY = {}
-
-def register_theory(name):
-    """Decorates theory classes to register then as physics model that predicts reflection/transmission spectrum based on a stack and material parameters.
-    Requires the following functions in the class:
-    transmission(params: MaterialParams, stack: StackData)
-    reflection(params: MaterialParams, stack: StackData, background: str)"""
-    def decorator(cls):
-        THEORY_REGISTRY[name] = cls
-        return cls
-    return decorator
-
-
 class BaseTheory:
     def __init__(self, backend: str):
         if(backend == "jax"):
@@ -37,6 +24,18 @@ class BaseTheory:
         """Return an OpticalParams object as initial values."""
         raise NotImplementedError
 
+
+THEORY_REGISTRY: dict[str, BaseTheory] = {}
+
+def register_theory(name):
+    """Decorates theory classes to register then as physics model that predicts reflection/transmission spectrum based on a stack and material parameters.
+    Requires the following functions in the class:
+    transmission(params: MaterialParams, stack: StackData)
+    reflection(params: MaterialParams, stack: StackData, background: str)"""
+    def decorator(cls):
+        THEORY_REGISTRY[name] = cls
+        return cls
+    return decorator
 
 
 @register_theory("kubelka_munk")
