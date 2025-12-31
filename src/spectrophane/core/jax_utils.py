@@ -20,16 +20,12 @@ def register_with_jax():
     except Exception:
         pass
 
-
-def jaxify(obj):
-    """Recursively convert NumPy arrays in dataclasses, dicts, lists, or tuples to JAX arrays.
-
-    This mirrors the previous `transformations.jaxify` behaviour but is
-    kept in the JAX adapter module so the conversion is explicit at the
-    JAX boundary.
+def _backendify(obj, framework):
     """
-    if isinstance(obj, np.ndarray):
-        return jnp.asarray(obj)
+    Recursively convert arrays in dataclasses, dicts, lists, or tuples to target frameworks arrays.
+    """
+    if isinstance(obj, np.ndarray) or isinstance(obj, jnp.ndarray):
+        return framework.asarray(obj)
     # dataclass check without importing dataclasses directly to avoid cycles
     try:
         from dataclasses import is_dataclass, replace, fields
@@ -37,11 +33,23 @@ def jaxify(obj):
         is_dataclass = lambda x: False
 
     if is_dataclass(obj):
-        return replace(obj, **{f.name: jaxify(getattr(obj, f.name)) for f in fields(obj)})
+        return replace(obj, **{f.name: _backendify(getattr(obj, f.name), framework) for f in fields(obj)})
     elif isinstance(obj, dict):
-        return {k: jaxify(v) for k, v in obj.items()}
+        return {k: _backendify(v, framework) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
         t = type(obj)
-        return t(jaxify(x) for x in obj)
+        return t(_backendify(x, framework) for x in obj)
     else:
         return obj
+
+def jaxify(obj):
+    """
+    Recursively convert arrays in dataclasses, dicts, lists, or tuples to JAX arrays.
+    """
+    return _backendify(obj, jnp)
+
+def numpyify(obj):
+    """
+    Recursively convert arrays in dataclasses, dicts, lists, or tuples to JAX arrays.
+    """
+    return _backendify(obj, np)
