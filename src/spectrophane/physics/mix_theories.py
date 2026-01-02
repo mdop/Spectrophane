@@ -13,11 +13,11 @@ class BaseTheory:
         self.xp = self.bn.xp
 
     def transmission(self, stack: StackData, params: MaterialParams) -> jnp.ndarray:
-        """Returns transmission spectrum for the given stack."""
+        """Returns transmission spectrum for the given stack. Only pass one stack to the function!"""
         raise NotImplementedError
     
     def reflection(self, stack: StackData, params: MaterialParams, backing: jnp.ndarray):
-        """Returns reflection spectrum for a given stack. Assumes black backing."""
+        """Returns reflection spectrum for a given stack. Only pass one stack to the function!"""
         raise NotImplementedError
 
     def initial_guess(self, material_count, min_wavelength, step_wavelength, spectrum_length):
@@ -98,14 +98,14 @@ class KubelkaMunk(BaseTheory):
         return self._chain_transfer_matrizes(Ms)
     
     def transmission(self, stack: StackData, params: MaterialParams):
-        """Calculates transmission spectrum of a material stack. Returns a spectrum array in the shape (wavelengths,)"""
+        """Calculates transmission spectrum of a material stack. Returns a spectrum array in the shape (wavelengths,). Only pass one stack to the function!"""
         #TODO: Raise Warning if arrays are not float64?
         M = self._stack_transfer_matrix(stack, params)
         T = M[0,0] - M[0,1]*M[1,0]/M[1,1]
         return T
     
     def reflection(self, stack: StackData, params: MaterialParams, backing: jnp.ndarray | np.ndarray):
-        """Calculates reflection spectrum of a material stack. Returns a spectrum array in the shape (wavelengths,)"""
+        """Calculates reflection spectrum of a material stack. Returns a spectrum array in the shape (wavelengths,). Only pass one stack to the function!"""
         M = self._stack_transfer_matrix(stack, params)
         R = (backing*M[0,0] + M[0,1]) / (backing*M[1,0] + M[1,1])
         return R

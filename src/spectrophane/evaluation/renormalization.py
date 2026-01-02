@@ -1,25 +1,14 @@
-
+import numpy as np
 
 class Renormalizer:
-    def __init__(self, scale_xyz):
-        self._scale_xyz = scale_xyz
+    """Corrects raw calculated colors to maximize dynamic range."""
+    def __init__(self):
+        self._scale_xyz = 1
+    
+    def find_scaling_factor(self, edge_xyz: np.ndarray):
+        """Finds approriate scaling factor for extreme colors based on an array of shape (edgecolors, 3). Scaling method is global channel saturation to keep colors in [0..1]³."""
+        max_component = np.max(edge_xyz)
+        self._scale_xyz = 1.0 / max_component
 
     def normalize(self, xyz):
-        return xyz / self._scale_xyz
-
-
-
-class RenormalizerFactory:
-
-    def build(self, *, theory, constraints, evaluator, wavelengths, mode, backend):
-        pass
-        """# 1. Determine brightest admissible stack (placeholder)
-        brightest_stack = constraints.brightest_stack()
-
-        # 2. Evaluate once
-        raw_xyz = evaluator.evaluate(theory, brightest_stack, wavelengths, mode, backend, normalize=False)
-
-        # 3. Compute scale
-        scale_xyz = raw_xyz.max(axis=0)
-
-        return Renormalizer(scale_xyz)"""
+        return xyz * self._scale_xyz
