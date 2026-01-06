@@ -71,3 +71,14 @@ class MaterialParams:
     model_type: Optional[str] = None  # "kubelka_munk", "saunderson", "monte_carlo"
 
 
+@dataclass
+class TopologyBlock:
+    allowed_materials: np.ndarray #order may be used in unordered stack construction
+    max_layers_per_allowed_material: np.ndarray
+    thicknesses: np.ndarray
+
+@dataclass
+class StackTopologyRules:
+    material_indexes: np.ndarray
+    blocks: list[TopologyBlock]
+    ordered: bool #Describes if order of layers matters. Decides max_layers for StackData shapes
