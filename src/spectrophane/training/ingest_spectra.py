@@ -31,7 +31,7 @@ def reshape_spectrum(old_min_wavelength: Number, old_step_wavelength: Number, ol
 def process_spectrum_list(spectrum_data_list: Sequence[Dict], materials: Sequence[Dict], min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[StackData, np.ndarray, np.ndarray]:
     """Takes data from a list of spectrum data from the source file and returns output grade stack and spectrum data. If given an empty spectrum list will return Null, Null"""
     if len(spectrum_data_list) == 0:
-        return StackData(np.array([]), np.array([]), np.array([])), np.array([]), np.array([])
+        return StackData(np.array([]), np.array([])), np.array([]), np.array([])
     output_spectra = np.zeros((len(spectrum_data_list), spectrum_length),dtype=np.float64)
     background_spectra = np.zeros((len(spectrum_data_list), spectrum_length),dtype=np.float64)
     stack_data_list = [entry["stack"] for entry in spectrum_data_list]

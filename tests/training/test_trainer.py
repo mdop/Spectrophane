@@ -30,14 +30,14 @@ class MockTheory(BaseTheory):
 
 class MockRefImageData(TrainingRefImageData):
     def __init__(self):
-        self.transmission_stacks = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)), stack_counts=jnp.array([2,1]))
+        self.transmission_stacks = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)))
         self.transmission_light_source_indexes = jnp.array([0,0])
         self.transmission_xyz = jnp.ones((2, 3))
 
 class MockRefSpectraData(TrainingRefSpectraData):
     def __init__(self):
-        self.transmission_stacks   = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)), stack_counts=jnp.array([2,1]))
-        self.reflection_stacks     = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)), stack_counts=jnp.array([2,1]))
+        self.transmission_stacks   = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)))
+        self.reflection_stacks     = StackData(material_nums=jnp.array([[0,1],[1,-1]]), thicknesses=jnp.ones((2,2)))
         self.transmission_spectra  = jnp.ones((2, 10))
         self.reflection_spectra    = jnp.ones((2, 10))
         self.reflection_background = jnp.ones((2, 10))

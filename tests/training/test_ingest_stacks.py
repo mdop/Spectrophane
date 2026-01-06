@@ -16,14 +16,12 @@ def test_stack_json_to_array():
     expected_output = StackData(
         np.array([[0, 1], [0, 0]]),
         np.array([[0.5, 1.0], [0.3, 0]]),
-        np.array([2, 1])
     )
 
     output = stack_json_to_array(material_list, stack_data)
     
     assert np.array_equal(output.material_nums, expected_output.material_nums)
     assert np.array_equal(output.thicknesses, expected_output.thicknesses)
-    assert np.array_equal(output.stack_counts, expected_output.stack_counts)
 
 
 def test_stack_json_to_array_empty_stack():
@@ -38,14 +36,12 @@ def test_stack_json_to_array_empty_stack():
     expected_output = StackData(
         np.array([[]], dtype=np.uint16),
         np.array([[]], dtype = np.uint8),
-        np.array([0], dtype=np.uint16)
     )
 
     output = stack_json_to_array(material_list, stack_data)
     
     assert np.array_equal(output.material_nums, expected_output.material_nums)
     assert np.array_equal(output.thicknesses, expected_output.thicknesses)
-    assert np.array_equal(output.stack_counts, expected_output.stack_counts)
 
 
 def test_stack_json_to_array_single_material():
@@ -60,11 +56,9 @@ def test_stack_json_to_array_single_material():
     expected_output = StackData(
         np.array([[0]]),
         np.array([[0.5]]),
-        np.array([1])
     )
 
     output = stack_json_to_array(material_list, stack_data)
     
     assert np.array_equal(output.material_nums, expected_output.material_nums)
     assert np.array_equal(output.thicknesses, expected_output.thicknesses)
-    assert np.array_equal(output.stack_counts, expected_output.stack_counts)

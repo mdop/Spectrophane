@@ -8,8 +8,7 @@ from spectrophane.core.dataclasses import StackData
 def stack_data():
     material_nums = np.array([[1, 2, 3],[2, 2, 3],[1, 2, 1],[1, 1, 3]])
     thicknesses = np.array([[0.1, 0.3, 0.3],[0.1, 0.2, 0.4],[0.2, 0.2, 0.3],[0.1, 0.2, 0.5]])
-    stack_counts = np.array([2, 3, 2, 1])
-    return StackData(material_nums=material_nums, thicknesses=thicknesses, stack_counts=stack_counts)
+    return StackData(material_nums=material_nums, thicknesses=thicknesses)
 
 @pytest.fixture
 def values():
@@ -40,7 +39,6 @@ def test_forward_cache_partial_sets(stack_data, values):
     stack_data2 = deepcopy(stack_data)
     stack_data2.material_nums = stack_data2.material_nums + 1
     stack_data2.thicknesses = stack_data2.thicknesses + 1
-    stack_data2.stack_counts = stack_data2.stack_counts
     stack_data_basesubset = stack_data.take(np.array([0,1]))
 
     cache = ForwardCache(cache_backend="dict")

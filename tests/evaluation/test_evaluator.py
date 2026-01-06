@@ -18,7 +18,7 @@ def config():
     res["step_wavelength"] = 1
     res["backing"] = np.ones(10)
     res["calc_backend"] = "jax"
-    res["edge_stacks"] = StackData(material_nums=np.array([[0,1],[1,0],[2,1]]), thicknesses=np.array([[0.1,0.1],[0.2,0.1],[0.3,0.2]]), stack_counts=np.array([2,2,2]))
+    res["edge_stacks"] = StackData(material_nums=np.array([[0,1],[1,0],[2,1]]), thicknesses=np.array([[0.1,0.1],[0.2,0.1],[0.3,0.2]]))
     return res
 
 def test_evaluator_initialization(config, mocker):
@@ -49,8 +49,8 @@ def test_evaluate_renormalize_caching(config):
     config["edge_stacks"] = None
     evaluator = Evaluator(**config)
 
-    eval_stack1 = StackData(material_nums=np.array([[1,0],[0,1],[1,2]]), thicknesses=np.array([[0.1,0.1],[0.2,0.1],[0.3,0.2]]), stack_counts=np.array([2,2,2]))
-    eval_stack2 = StackData(material_nums=np.array([[1,0],[0,1],[1,2]]), thicknesses=np.array([[0.2,0.1],[0.2,0.2],[0.3,0.1]]), stack_counts=np.array([2,2,2]))
+    eval_stack1 = StackData(material_nums=np.array([[1,0],[0,1],[1,2]]), thicknesses=np.array([[0.1,0.1],[0.2,0.1],[0.3,0.2]]))
+    eval_stack2 = StackData(material_nums=np.array([[1,0],[0,1],[1,2]]), thicknesses=np.array([[0.2,0.1],[0.2,0.2],[0.3,0.1]]))
 
     #show change in return after calibration
     stack_reflection_result = np.random.rand(10,) * 0.9

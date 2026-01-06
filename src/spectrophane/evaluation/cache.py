@@ -76,14 +76,12 @@ class ForwardCache:
         return mask
 
     def _batch_hash(self, stacks: StackData) -> np.ndarray:
-        #TODO: Replace cryptographic hashing with VECTORIZED semantic numeric hashing, canonicalizing data (0-ing unused layers [stack_counts:], integerizing thicknesses) and rolling hash -> better performance
+        #TODO: Replace cryptographic hashing with VECTORIZED semantic numeric hashing, integerizing thicknesses) and rolling hash -> better performance
         m = np.ascontiguousarray(stacks.material_nums, dtype=np.int64)
         t = np.ascontiguousarray(stacks.thicknesses,   dtype=np.float64)
-        c = np.ascontiguousarray(stacks.stack_counts,  dtype=np.int64)
         assert m.shape[0] == t.shape[0], "Forward Cache hashing: Arrays must have the same size along the specified axis"
-        assert m.shape[0] == c.shape[0], "Forward Cache hashing: Arrays must have the same size along the specified axis"
 
         hashes = np.array(["a"*32]*len(m), dtype=np.str_)
-        for i in range(len(c)):
-            hashes[i] = hashlib.sha256(m[i].tobytes() + t[i].tobytes() + c[i].tobytes()).hexdigest()
+        for i in range(len(m)):
+            hashes[i] = hashlib.sha256(m[i].tobytes() + t[i].tobytes()).hexdigest()
         return hashes

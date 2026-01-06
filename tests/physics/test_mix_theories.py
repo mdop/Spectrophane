@@ -102,7 +102,7 @@ def test_KM_chain_transfer_matrizes_identity(KM_instance: KubelkaMunk, xp):
 
 @pytest.fixture
 def mock_stack(xp):
-    return StackData(material_nums=xp.array([0, 1]), thicknesses=xp.array([1.0, 2.0]), stack_counts=xp.array([2]))
+    return StackData(material_nums=xp.array([0, 1]), thicknesses=xp.array([1.0, 2.0]))
 
 @pytest.fixture
 def mock_material_params(xp):
@@ -119,7 +119,7 @@ def test_KM_stack_transfer_matrix_multiple_layers(KM_instance: KubelkaMunk, mock
 
 def test_KM_stack_transfer_matrix_single_layer(KM_instance: KubelkaMunk, xp):
     # Mock data for a single layer
-    stack = StackData(material_nums=xp.array([0]), thicknesses=xp.array([1.0]), stack_counts=xp.array([1]))
+    stack = StackData(material_nums=xp.array([0]), thicknesses=xp.array([1.0]))
     params = MaterialParams(
         absorption_coeff=xp.array([[0.1, 0.2, 0.3]]), 
         scattering_coeff=xp.array([[0.5, 0.6, 0.7]])
@@ -139,7 +139,7 @@ def test_KM_stack_transfer_matrix_zero_thickness(KM_instance: KubelkaMunk, mock_
 
 def test_KM_stack_transfer_matrix_large_number_of_layers(KM_instance: KubelkaMunk, xp):
     # Mock data with a large number of layers
-    stack = StackData(material_nums=xp.array([0] * 100), thicknesses=xp.array([1.0] * 100), stack_counts=xp.array([100]))
+    stack = StackData(material_nums=xp.array([0] * 100), thicknesses=xp.array([1.0] * 100))
     params = MaterialParams(
         absorption_coeff=xp.array([[0.1, 0.2, 0.3]]), 
         scattering_coeff=xp.array([[0.5, 0.6, 0.7]])
@@ -152,7 +152,7 @@ def test_KM_stack_transfer_matrix_large_number_of_layers(KM_instance: KubelkaMun
 
 @pytest.fixture
 def mock_black_top_white_bottom(xp):
-    stack = StackData(material_nums=xp.array([0,1]), thicknesses=xp.array([1,1]), stack_counts=xp.array([2]))
+    stack = StackData(material_nums=xp.array([0,1]), thicknesses=xp.array([1,1]))
     param = MaterialParams(absorption_coeff=xp.array([[0.001]*100, [3]*100]), scattering_coeff=xp.array([[10]*100, [10]*100]))
     return stack, param
 

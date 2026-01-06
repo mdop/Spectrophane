@@ -85,12 +85,9 @@ class KubelkaMunk(BaseTheory):
         material_ids = stack.material_nums
         thicknesses = stack.thicknesses
 
-        # mask: (layers,)
-        mask = self.xp.arange(material_ids.shape[0]) < stack.stack_counts
-
         Ks = params.absorption_coeff[material_ids]
         Ss = params.scattering_coeff[material_ids]
-        ds = thicknesses * mask
+        ds = thicknesses
 
         layer_fn = self.bn.vmap(self._single_layer_transfer_matrix, in_axes=(0, 0, 0))
         Ms = layer_fn(Ks, Ss, ds)
