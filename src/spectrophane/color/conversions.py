@@ -23,6 +23,11 @@ def linrgb_to_xyz(rgb_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip:
         xyz = np.clip(xyz, 0, 1)
     return xyz
 
+def decode_rgb(rgb_arr: np.ndarray) -> np.ndarray:
+    """Takes srgb array in [0,1] with arbitrary shape and decodes to linear RGB image according to Rec. 709. Returns image in numpy float32 array in [0,1]"""
+    #TODO: Add customizable gamma
+    return np.clip(np.where(rgb_arr < 0.081, rgb_arr/4.5, np.pow((rgb_arr+0.099)/1.099,1/0.45)), 0,1)
+
 def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.ndarray, observer: np.ndarray | jnp.ndarray, step_wavelength: Number):
     """Calculates normalization factor for spectrum to xyz conversion for indirect illumination from harmonized spectra of the light source and observer"""
     if isinstance(light_source, np.ndarray):

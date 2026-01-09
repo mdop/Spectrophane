@@ -6,7 +6,7 @@ from typing import Sequence, Callable
 
 from spectrophane.core.dataclasses import TrainingRefImageData
 from spectrophane.io.resources import get_resource_path
-from spectrophane.color.conversions import linrgb_to_xyz
+from spectrophane.color.conversions import linrgb_to_xyz, decode_rgb
 from spectrophane.training.ingest_stacks import stack_json_to_array
 from spectrophane.color.spectral_helper import parse_light_sources
 
@@ -24,16 +24,11 @@ def raw_to_linear_rgb(filename: str) -> np.ndarray:
         ).astype(np.float32) / 65535.0
     return rgb
 
-def decode_rgb_img(image: np.ndarray) -> np.ndarray:
-    """Takes srgb image in [0,1] and decodes to linear RGB image according to Rec. 709. Returns image in numpy float32 array in [0,1]"""
-    #TODO: Add customizable gamma
-    return np.clip(np.where(image < 0.081, image/4.5, np.pow((image+0.099)/1.099,1/0.45)), 0,1)
-
 def rgb_image_to_linrgb(filename: str) -> np.ndarray:
     """Takes image path and transforms it into linear rgb. Assumes an 8-bit image."""
     total_path = get_resource_path("material_data/images/" + filename)
     image = np.array(Image.open(total_path), dtype=np.float32) / 255.0
-    lin_image = decode_rgb_img(image)
+    lin_image = decode_rgb(image)
     return lin_image
 
 def import_image(filename: str) -> np.ndarray:

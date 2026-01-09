@@ -22,7 +22,8 @@ class StackGenerator:
             raise ValueError(f"Error generating stacks: Unknown mode {mode}")
         
         score = np.zeros(len(material_nums), dtype=np.float32)
-        return StackCandidates(material_nums=material_nums, thicknesses=thicknesses, score=score)
+        ref_id = np.zeros(len(material_nums), dtype=np.int32)
+        return StackCandidates(material_nums=material_nums, thicknesses=thicknesses, request_id=ref_id, score=score)
 
     def _complete_unordered_stackset(self):
         """Assembles unordered stack data from all blocks to a complete array for stack data."""

@@ -1,8 +1,8 @@
 import numpy as np
 import jax.numpy as jnp
-import jax
+import pytest
 
-from spectrophane.color.conversions import linrgb_to_xyz, spectrum_to_xyz
+from spectrophane.color.conversions import linrgb_to_xyz, spectrum_to_xyz, decode_rgb
 from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 
 def test_linrgb_to_xyz_single():
@@ -22,6 +22,25 @@ def test_linrgb_to_xyz_multi():
     matrix = np.random.rand(3,3)
     result_custom_matrix = linrgb_to_xyz(rgb, matrix)
     assert result_custom_matrix.shape == (100,3)
+
+@pytest.fixture
+def mock_rgb_singlearr():
+    return np.astype(np.random.rand(3)*255, np.uint8)
+
+@pytest.fixture
+def mock_rgb_img():
+    return np.astype(np.random.rand(100, 100, 3)*255, np.uint8)
+
+def test_decode_rgb(mock_rgb_singlearr, mock_rgb_img):
+    result_single = decode_rgb(mock_rgb_singlearr)
+    assert result_single.shape == (3,)
+    
+    low = np.clip(mock_rgb_img[:5, :5, 0] / 4.5, 0, 1)
+    high = np.clip(np.power((mock_rgb_img[:5, :5, 0] + 0.099) / 1.099, 1/0.45), 0, 1)
+    expected = np.where(mock_rgb_img[:5, :5, 0] < 0.081, low, high)
+    result = decode_rgb(mock_rgb_img)
+    assert result.shape == (100,100,3)
+    assert np.array_equal(result[:5, :5, 0], expected)
 
 def test_spectrum_to_xyz_np():
     light = np.random.rand(100)

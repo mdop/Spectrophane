@@ -36,6 +36,7 @@ class StackCandidates(StackData):
     """
     Dataclass describing StackData with additional metadata for scoring of fitness. Score is in range 0..1
     """
+    request_id: np.ndarray #relevant for batched conversion request with multiple return stacks
     score: np.ndarray
 
 @dataclass

@@ -4,7 +4,6 @@ import numpy as np
 import json
 from spectrophane.training.ingest_images import (
     raw_to_linear_rgb,
-    decode_rgb_img,
     rgb_image_to_linrgb,
     import_image,
     calibrate_spatial_brightness,
@@ -64,19 +63,11 @@ def test_raw_to_linear_rgb(mocker, mock_raw_image):
     )
     assert np.allclose(result, mock_raw_image, atol=1e-4)
 
-# Test decode_rgb_img
-def test_decode_rgb_img(mock_rgb_image):
-    low = np.clip(mock_rgb_image[:5, :5, 0] / 4.5, 0, 1)
-    high = np.clip(np.power((mock_rgb_image[:5, :5, 0] + 0.099) / 1.099, 1/0.45), 0, 1)
-    expected = np.where(mock_rgb_image[:5, :5, 0] < 0.081, low, high)
-    result = decode_rgb_img(mock_rgb_image)
-    assert np.array_equal(result[:5, :5, 0], expected)
-
 # Test image_to_linrgb
 def test_rgb_image_to_linrgb(mocker, mock_rgb_image):
     mock_get_resource_path = mocker.patch('spectrophane.training.ingest_images.get_resource_path', return_value='/fake/path/test.raw')
     mock_image_open = mocker.patch('PIL.Image.open', return_value=mock_rgb_image)
-    mock_decode_rgb_img = mocker.patch('spectrophane.training.ingest_images.decode_rgb_img', return_value=mock_rgb_image)
+    mock_decode_rgb_img = mocker.patch('spectrophane.training.ingest_images.decode_rgb', return_value=mock_rgb_image)
     
     result = rgb_image_to_linrgb("rest.raw")
     
