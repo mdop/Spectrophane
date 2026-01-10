@@ -38,6 +38,13 @@ class StackCandidates(StackData):
     """
     request_id: np.ndarray #relevant for batched conversion request with multiple return stacks
     score: np.ndarray
+    def take(self, indices: np.ndarray) -> "StackData":
+        return StackCandidates(
+            material_nums=self.material_nums[indices],
+            thicknesses=self.thicknesses[indices],
+            request_id=self.request_id[indices],
+            score=self.score[indices],
+        )
 
 @dataclass
 class TrainingRefSpectraData:
