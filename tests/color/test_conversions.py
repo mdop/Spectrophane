@@ -2,19 +2,27 @@ import numpy as np
 import jax.numpy as jnp
 import pytest
 
-from spectrophane.color.conversions import linrgb_to_xyz, spectrum_to_xyz, decode_rgb
+from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb
 from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 
-def test_linrgb_to_xyz_single():
+@pytest.mark.parametrize("func", [
+    (linrgb_to_xyz),
+    (xyz_to_linrgb),
+])
+def test_linrgb_to_xyz_single(func):
     rgb = np.random.rand(3)
-    result = linrgb_to_xyz(rgb)
+    result = func(rgb)
     assert result.shape == (3,)
     assert np.all(result <= 1)
     assert np.all(result >= 0)
 
-def test_linrgb_to_xyz_multi():
+@pytest.mark.parametrize("func", [
+    (linrgb_to_xyz),
+    (xyz_to_linrgb),
+])
+def test_linrgb_to_xyz_multi(func):
     rgb = np.random.rand(100,3)
-    result = linrgb_to_xyz(rgb)
+    result = func(rgb)
     assert result.shape == (100,3)
     assert np.all(result <= 1)
     assert np.all(result >= 0)
@@ -23,24 +31,44 @@ def test_linrgb_to_xyz_multi():
     result_custom_matrix = linrgb_to_xyz(rgb, matrix)
     assert result_custom_matrix.shape == (100,3)
 
+def test_linrgb_xyz_roundtrip():
+    rgb = np.random.rand(100,3)
+    roundtrip = xyz_to_linrgb(linrgb_to_xyz(rgb, clip=False), clip=False)
+    assert np.allclose(roundtrip, rgb, rtol=0.01)
+
 @pytest.fixture
 def mock_rgb_singlearr():
     return np.astype(np.random.rand(3)*255, np.uint8)
 
 @pytest.fixture
-def mock_rgb_img():
-    return np.astype(np.random.rand(100, 100, 3)*255, np.uint8)
+def mock_rgb_2D():
+    return np.random.rand(100, 100, 3)
 
-def test_decode_rgb(mock_rgb_singlearr, mock_rgb_img):
-    result_single = decode_rgb(mock_rgb_singlearr)
+@pytest.mark.parametrize("func", [
+    (decode_rgb),
+    (encode_rgb),
+])
+def test_deencode_rgb_single(mock_rgb_singlearr, func):
+    result_single = func(mock_rgb_singlearr)
     assert result_single.shape == (3,)
-    
-    low = np.clip(mock_rgb_img[:5, :5, 0] / 4.5, 0, 1)
-    high = np.clip(np.power((mock_rgb_img[:5, :5, 0] + 0.099) / 1.099, 1/0.45), 0, 1)
-    expected = np.where(mock_rgb_img[:5, :5, 0] < 0.081, low, high)
-    result = decode_rgb(mock_rgb_img)
+
+def test_deencode_rgb_multi(mock_rgb_2D):
+    low = np.clip(mock_rgb_2D / 4.5, 0, 1)
+    high = np.clip(np.power((mock_rgb_2D + 0.099) / 1.099, 1/0.45), 0, 1)
+    expected = np.where(mock_rgb_2D < 0.081, low, high)
+    result = decode_rgb(mock_rgb_2D)
     assert result.shape == (100,100,3)
-    assert np.array_equal(result[:5, :5, 0], expected)
+    assert np.allclose(result, expected)
+
+    low2 = np.clip(mock_rgb_2D * 4.5, 0, 1)
+    high2 = np.clip(1.099*np.pow(mock_rgb_2D, 0.45)-0.099, 0, 1)
+    expected2 = np.where(mock_rgb_2D < 0.018, low2, high2)
+    result2 = encode_rgb(mock_rgb_2D)
+    assert result.shape == (100,100,3)
+    assert np.allclose(result2, expected2)
+
+    roundtrip = encode_rgb(decode_rgb(mock_rgb_2D))
+    assert np.allclose(roundtrip, mock_rgb_2D, rtol=0.004)
 
 def test_spectrum_to_xyz_np():
     light = np.random.rand(100)

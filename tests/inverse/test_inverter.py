@@ -10,10 +10,9 @@ def mock_stack_generator():
     class MockStackGenerator:
         def generate(self, mode):
             if mode == "complete":
-                return StackCandidates(material_nums=   np.array([[1, 2, 3],[1, 2, 3],[1, 2, 3]]),
-                                       thicknesses=     np.array([[1, 1, 1],[1, 1, 1],[1, 1, 1]]),
-                                       request_id=      np.array([1, 2, 3]),
-                                       score=           np.array([1, 2, 3]))
+                return StackCandidates(material_nums=   np.array([[0, 2, 3],[1, 2, 3],[2, 2, 3],[3, 2, 3]]),
+                                       thicknesses=     np.array([[1, 1, 1],[1, 1, 1],[1, 1, 1],[1, 1, 1]]),
+                                       rgb=             np.array([[0, 0, 0],[0, 0, 0],[0, 0, 0],[0, 0, 0]]))
             else:
                 return []
     return MockStackGenerator()
@@ -21,8 +20,10 @@ def mock_stack_generator():
 @pytest.fixture
 def mock_evaluator():
     class MockEvaluator:
-        def evaluate(self, stacks):
-            return np.array([np.array([0.1, 0.2, 0.3])])
+        def evaluate(self, stacks: StackCandidates):
+            stacks = len(stacks.material_nums)
+            vals = np.array([[(i)/(stacks), (i)/(stacks), (i)/(stacks)] for i in range(stacks)]) #evenly spaced values in rgb space diagonal
+            return linrgb_to_xyz(decode_rgb(vals))
     return MockEvaluator()
 
 @pytest.mark.parametrize("compression_factor, steps", [
@@ -50,7 +51,6 @@ def test_lut_generate_xyz_space(mock_stack_generator, mock_evaluator):
     assert np.allclose(test_xyz, result_sample_xyz)
 
 
-
 def test_generate_lut(mock_stack_generator, mock_evaluator):
     inverter = LUTInverter(lut_compression_factor=4, stack_generator=mock_stack_generator, evaluator=mock_evaluator)
     inverter._generate_lut()
@@ -58,7 +58,11 @@ def test_generate_lut(mock_stack_generator, mock_evaluator):
     assert inverter._lut.shape == (64, 64, 64)
 
 def test_lut_invert_rgb(mock_stack_generator, mock_evaluator):
-    inverter = LUTInverter(lut_compression_factor=1, stack_generator=mock_stack_generator, evaluator=mock_evaluator)
-    rgb = np.array([0.5, 0.5, 0.5])
-    result = inverter.invert_rgb(rgb)
-    assert isinstance(result, StackCandidates)
+    inverter = LUTInverter(lut_compression_factor=8, stack_generator=mock_stack_generator, evaluator=mock_evaluator)
+    rgb = np.array([[128,128,128],[0,0,0],[64,64,64],[192,192,192],[255,255,255],[61,61,61]], np.int16)
+    stacks, scores = inverter.invert_rgb(rgb)
+    assert isinstance(stacks, StackCandidates)
+    assert isinstance(scores, np.ndarray)
+    assert scores.shape == (6,)
+    assert stacks.material_nums[:,0].tolist() == [2,0,1,3,3,1]
+    assert np.all(scores[:4] < 2e-3)
