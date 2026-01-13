@@ -34,16 +34,14 @@ class StackData:
 @dataclass
 class StackCandidates(StackData):
     """
-    Dataclass describing StackData with additional metadata for scoring of fitness. Score is in range 0..1
+    Dataclass describing StackData with associated color. Score is in range 0..1
     """
-    request_id: np.ndarray #relevant for batched conversion request with multiple return stacks
-    score: np.ndarray
+    rgb: np.ndarray
     def take(self, indices: np.ndarray) -> "StackData":
         return StackCandidates(
             material_nums=self.material_nums[indices],
             thicknesses=self.thicknesses[indices],
-            request_id=self.request_id[indices],
-            score=self.score[indices],
+            rgb=self.rgb[indices],
         )
 
 @dataclass

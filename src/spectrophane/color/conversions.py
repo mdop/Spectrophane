@@ -7,26 +7,44 @@ MATRIX_sRGB_TO_XYZ = np.array([
     [0.2126, 0.7152, 0.0722],
     [0.0193, 0.1192, 0.9505],
 ])
-MATRIX_sRGB_TO_XYZ = np.linalg.inv(MATRIX_sRGB_TO_XYZ)
+MATRIX_XYZ_TO_sRGB = np.linalg.inv(MATRIX_sRGB_TO_XYZ)
 
-def linrgb_to_xyz(rgb_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip: bool = True):
-    """transforms numpy array of shape (N,3) or (3,) from linear rgb space in [0,1] to xyz space. Matrix argument may be a transformation matrix or a name. Recognized names: "sRGB" (D65 white point)"""
+def _rgb_xyz_conversion(target: str, source_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip: bool = True):
+    """transforms numpy array of shape (N,3) or (3,) between (linear) rgb and xyz space. Matrix argument may be a transformation matrix or a name. 
+    Recognized matrix names: "sRGB" (D65 white point)
+    Recognized targets: xyz (from rgb), rgb (from xyz)"""
     if isinstance(matrix, str) and matrix == "sRGB":
-        transform_matrix = MATRIX_sRGB_TO_XYZ
+        if target == "xyz":
+            transform_matrix = MATRIX_sRGB_TO_XYZ
+        else:
+            transform_matrix = MATRIX_XYZ_TO_sRGB
     elif isinstance(matrix, np.ndarray):
         transform_matrix = matrix
     else:
         raise ValueError(f"Unknown RGB to XYZ conversion matrix name: {matrix}")
-    xyz = transform_matrix @ rgb_values.T
+    xyz = transform_matrix @ source_values.T
     xyz = xyz.T
     if clip:
         xyz = np.clip(xyz, 0, 1)
     return xyz
 
+def linrgb_to_xyz(rgb_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip: bool = True):
+    """transforms numpy array of shape (N,3) or (3,) from linear rgb space in [0,1] to xyz space. Matrix argument may be a transformation matrix or a name. Recognized names: "sRGB" (D65 white point)"""
+    return _rgb_xyz_conversion("xyz", rgb_values, matrix, clip)
+
+def xyz_to_linrgb(xyz_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip: bool = True):
+    """transforms numpy array of shape (N,3) or (3,) from xyz space in [0,1] to (linear) rgb space. Matrix argument may be a transformation matrix or a name. Recognized names: "sRGB" (D65 white point)"""
+    return _rgb_xyz_conversion("rgb", xyz_values, matrix, clip)
+
 def decode_rgb(rgb_arr: np.ndarray) -> np.ndarray:
     """Takes srgb array in [0,1] with arbitrary shape and decodes to linear RGB image according to Rec. 709. Returns image in numpy float32 array in [0,1]"""
     #TODO: Add customizable gamma
     return np.clip(np.where(rgb_arr < 0.081, rgb_arr/4.5, np.pow((rgb_arr+0.099)/1.099,1/0.45)), 0,1)
+
+def encode_rgb(linrgb_arr: np.ndarray) -> np.ndarray:
+    """Takes linear srgb array in [0,1] with arbitrary shape and encodes to RGB image according to Rec. 709. Returns image in numpy float32 array in [0,1]"""
+    #TODO: Add customizable gamma
+    return np.clip(np.where(linrgb_arr < 0.018, linrgb_arr*4.5, 1.099 * np.pow(linrgb_arr,0.45)-0.099), 0, 1)
 
 def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.ndarray, observer: np.ndarray | jnp.ndarray, step_wavelength: Number):
     """Calculates normalization factor for spectrum to xyz conversion for indirect illumination from harmonized spectra of the light source and observer"""

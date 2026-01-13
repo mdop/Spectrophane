@@ -3,7 +3,7 @@ import numpy as np
 from math import ceil
 
 from spectrophane.core.dataclasses import StackCandidates
-from spectrophane.color.conversions import decode_rgb, linrgb_to_xyz
+from spectrophane.color.conversions import decode_rgb, encode_rgb, linrgb_to_xyz, xyz_to_linrgb
 from spectrophane.evaluation.evaluator import Evaluator
 from spectrophane.inverse.stack_generation import StackGenerator
 
@@ -23,6 +23,7 @@ class LUTInverter(Inverter):
         self._eval = evaluator
 
         self._lut = None
+        self._lut_score = None
         self._stacks = None
         self._steps = ceil(256.0 / self._compression)
 
@@ -43,28 +44,32 @@ class LUTInverter(Inverter):
         """Generates lookup table for color requests"""
         self._stacks = self._stack_generator.generate("complete")
         stack_xyz = self._eval.evaluate(stacks=self._stacks)
+        self._stacks.rgb = np.rint(encode_rgb(xyz_to_linrgb(stack_xyz))*255)
         xyz_space = self._generate_xyz_space()
 
-        # Flatten voxel grid for vectorized distance computation
+        # Flatten voxel grid , calculate L2 distance
         xyz_flat = xyz_space.reshape(-1, 3)  # (n_voxels, 3)
-
-        # Compute squared L2 distances: (n_voxels, n_stacks)
-        diff = xyz_flat[:, None, :] - stack_xyz[None, :, :]
-        dist2 = np.sum(diff * diff, axis=2)
+        diff = xyz_flat[:, None, :] - stack_xyz[None, :, :] #(n_voxels, n_stacks, 3)
+        dist2 = np.sum(diff * diff, axis=2) #(n_voxels, n_stacks)
 
         # Best stack per voxel
-        best_stack_idx = np.argmin(dist2, axis=1)
+        best_stack_idx = np.argmin(dist2, axis=1) #(n_voxels,)
+        #best_stack_score = 1 - dist2[:,best_stack_idx] / np.sqrt(3) # normalize to 0..1 with 1 being best fit #doing this somehow crashes due to RAM usage
+        scores = np.zeros_like(best_stack_idx, dtype=np.float16)
+        for i in range(len(scores)):
+            scores[i] = dist2[i, best_stack_idx[i]]/np.sqrt(3)
 
         # Reshape back to LUT grid
-        self._lut = best_stack_idx.reshape(self._steps, self._steps, self._steps)
+        self._lut       = best_stack_idx.reshape(self._steps, self._steps, self._steps)
+        self._lut_score = scores.reshape(self._steps, self._steps, self._steps)
 
-    def invert_rgb(self, rgb: np.ndarray) -> StackCandidates:
+    def invert_rgb(self, rgb_int: np.ndarray) -> tuple[StackCandidates, np.ndarray]:
         """
         Invert RGB using LUT.
         """
         # Map to compressed LUT index
-        idx = np.floor(rgb / self._compression).astype(int)
-        idx = np.clip(idx, 0, self._steps - 1)
+        lut_index = np.floor(rgb_int / self._compression).astype(int)
+        lut_index = np.clip(lut_index, 0, self._steps - 1)
 
-        stack_idx = self._lut[idx[0], idx[1], idx[2]]
-        return self._stacks.take(stack_idx)
+        stack_idx = self._lut[lut_index[:,0], lut_index[:,1], lut_index[:,2]]
+        return self._stacks.take(stack_idx), self._lut_score[lut_index[:,0], lut_index[:,1], lut_index[:,2]]
