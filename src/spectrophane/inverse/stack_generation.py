@@ -18,12 +18,13 @@ class StackGenerator:
         """
         if mode == "complete" and not self._rules.ordered:
             material_nums, thicknesses = self._complete_unordered_stackset()
+        elif mode == "single material" and not self._rules.ordered:
+            material_nums, thicknesses = self._single_material_unordered_edge_stacks()
         else:
             raise ValueError(f"Error generating stacks: Unknown mode {mode}")
         
-        score = np.zeros(len(material_nums), dtype=np.float32)
-        ref_id = np.zeros(len(material_nums), dtype=np.int32)
-        return StackCandidates(material_nums=material_nums, thicknesses=thicknesses, request_id=ref_id, score=score)
+        color = np.zeros((len(material_nums),3), dtype=np.float32)
+        return StackCandidates(material_nums=material_nums, thicknesses=thicknesses, rgb=color)
 
     def _complete_unordered_stackset(self):
         """Assembles unordered stack data from all blocks to a complete array for stack data."""
@@ -101,3 +102,13 @@ class StackGenerator:
         dfs(0, L)
 
         return np.asarray(results, dtype=int), thickness
+    
+    def _single_material_unordered_edge_stacks(self):
+        """Creates stacks of a single material for gamut renormalization"""
+        #TODO: Respect allowed materials, perhaps with some sort of replacement hirarchy?
+        thicknesses = []
+        for block in self._rules.blocks:
+            thicknesses += block.thicknesses.tolist()
+        material_matrix = np.array([[mat.tolist()]*len(thicknesses) for mat in self._rules.material_indexes])
+        thickness_matrix = np.array([thicknesses for mat in self._rules.material_indexes])
+        return material_matrix, thickness_matrix
