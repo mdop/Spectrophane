@@ -60,9 +60,11 @@ def test_generate_lut(mock_stack_generator, mock_evaluator):
 def test_lut_invert_rgb(mock_stack_generator, mock_evaluator):
     inverter = LUTInverter(lut_compression_factor=8, stack_generator=mock_stack_generator, evaluator=mock_evaluator)
     rgb = np.array([[128,128,128],[0,0,0],[64,64,64],[192,192,192],[255,255,255],[61,61,61]], np.int16)
-    stacks, scores = inverter.invert_rgb(rgb)
+    stacks, scores, request_ids = inverter.invert_color(rgb)
     assert isinstance(stacks, StackCandidates)
     assert isinstance(scores, np.ndarray)
+    assert isinstance(request_ids, np.ndarray)
     assert scores.shape == (6,)
+    assert request_ids.shape == (6,)
     assert stacks.material_nums[:,0].tolist() == [2,0,1,3,3,1]
     assert np.all(scores[:4] < 2e-3)
