@@ -88,3 +88,9 @@ class StackTopologyRules:
     material_indexes: np.ndarray
     blocks: list[TopologyBlock]
     ordered: bool #Describes if order of layers matters. Decides max_layers for StackData shapes
+
+@dataclass
+class VoxelGeometry:
+    materials: np.ndarray          # shape (Z, Y, X), dtype=int
+    layer_thickness: np.ndarray    # shape (Z,), dtype=float, unit=mm
+    voxel_size_xy: tuple[float, float]
