@@ -10,7 +10,8 @@ from spectrophane.inverse.stack_generation import StackGenerator
 class Inverter(ABC):
 
     @abstractmethod
-    def invert_color(self, colors: np.ndarray, color_space: str) -> StackCandidates:
+    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int, color_space: str) -> tuple[StackCandidates, np.ndarray, np.ndarray]:
+        """Returns StackCandidates, request index array, and score array for a requested color batch."""
         ...
 
 
@@ -63,9 +64,9 @@ class LUTInverter(Inverter):
         self._lut       = best_stack_idx.reshape(self._steps, self._steps, self._steps)
         self._lut_score = scores.reshape(self._steps, self._steps, self._steps)
 
-    def invert_color(self, colors: np.ndarray, color_space: str = "rgb") -> tuple[StackCandidates, np.ndarray, np.ndarray]:
+    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int = 1, color_space: str = "rgb") -> tuple[StackCandidates, np.ndarray, np.ndarray]:
         """
-        Invert RGB using LUT. Returns StackCandidates, score array, and request index array.
+        Invert RGB using LUT. Returns StackCandidates, request index array, and score array. Can only return 1 stack per color.
         """
         # Map to compressed LUT index
         if color_space == "rgb":
@@ -76,4 +77,4 @@ class LUTInverter(Inverter):
         lut_index = np.clip(lut_index, 0, self._steps - 1)
 
         stack_idx = self._lut[lut_index[:,0], lut_index[:,1], lut_index[:,2]]
-        return self._stacks.take(stack_idx), self._lut_score[lut_index[:,0], lut_index[:,1], lut_index[:,2]], np.indices([len(stack_idx)]).ravel()
+        return self._stacks.take(stack_idx), np.indices([len(stack_idx)]).ravel(), self._lut_score[lut_index[:,0], lut_index[:,1], lut_index[:,2]]
