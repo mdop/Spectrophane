@@ -69,9 +69,10 @@ def test_stackmap_to_voxelmap():
     voxel_size_xy = (10, 10)
     stacks = StackData(thicknesses=np.array([[0.2, 0.3], [0.1, 0.4], [0.5, 0.0]]), material_nums=np.array([[0, 1], [1, 2], [1, 0]]))
     image_stack_indexes = np.random.randint(0,3, voxel_size_xy)
+    material_names = ["A", "B", "C"]
     
     # Test stackmap_to_voxelmap
-    voxel_geometry = stackmap_to_voxelmap(layer_thicknesses, voxel_size_xy, stacks, image_stack_indexes)
+    voxel_geometry = stackmap_to_voxelmap(layer_thicknesses, voxel_size_xy, stacks, image_stack_indexes, material_names)
     
     assert isinstance(voxel_geometry, VoxelGeometry), "Result should be an instance of VoxelGeometry"
     assert voxel_geometry.materials.shape == (10, 10, 4), "material_map should have the correct shape"

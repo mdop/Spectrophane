@@ -94,3 +94,23 @@ class VoxelGeometry:
     materials: np.ndarray          # shape (Z, Y, X), dtype=int
     layer_thickness: np.ndarray    # shape (Z,), dtype=float, unit=mm
     voxel_size_xy: tuple[float, float]
+    material_names: str
+
+
+class SolidPrimitive:
+    pass
+
+@dataclass(frozen=True, slots=True)
+class Box(SolidPrimitive):
+    x0: float
+    x1: float
+    y0: float
+    y1: float
+    z0: float
+    z1: float
+
+@dataclass(frozen=True, slots=True) #Not used now, but will be interesting for STEP export
+class Prism(SolidPrimitive):
+    base_xy: np.ndarray  # shape (N, 2), dtype=float64
+    z0: float
+    z1: float

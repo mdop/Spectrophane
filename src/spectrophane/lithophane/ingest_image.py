@@ -46,7 +46,7 @@ def _pixel_voxel_stack_height_matching(cumulative_voxel_heights: np.ndarray, cum
     return pixel_materials
 
 
-def stackmap_to_voxelmap(layer_thicknesses: np.ndarray, voxel_size_xy: tuple[float, float] | float, stacks: StackData, image_stack_indexes: np.ndarray) -> VoxelGeometry:
+def stackmap_to_voxelmap(layer_thicknesses: np.ndarray, voxel_size_xy: tuple[float, float] | float, stacks: StackData, image_stack_indexes: np.ndarray, material_names: list[str]) -> VoxelGeometry:
     cumulative_thicknesses = np.cumsum(layer_thicknesses)
     cumulative_stack_heights = np.cumsum(stacks.thicknesses, axis=1)
 
@@ -66,4 +66,4 @@ def stackmap_to_voxelmap(layer_thicknesses: np.ndarray, voxel_size_xy: tuple[flo
     
     assert not np.any(material_map == -1), "Mapping color to material stacks failed. Unassigned voxel position detected!"
 
-    return VoxelGeometry(materials=material_map, layer_thickness=layer_thicknesses, voxel_size_xy=voxel_size_xy)
+    return VoxelGeometry(materials=material_map, layer_thickness=layer_thicknesses, voxel_size_xy=voxel_size_xy, material_names=material_names)
