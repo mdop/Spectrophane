@@ -66,15 +66,15 @@ def test_pixel_voxel_stack_height_matching_empty_layer():
 def test_stackmap_to_voxelmap():
     # Create sample inputs
     layer_thicknesses = np.array([0.1, 0.1, 0.2, 0.1])
-    voxel_size_xy = (10, 10)
+    voxel_size_xy = (0.4, 0.4)
     stacks = StackData(thicknesses=np.array([[0.2, 0.3], [0.1, 0.4], [0.5, 0.0]]), material_nums=np.array([[0, 1], [1, 2], [1, 0]]))
-    image_stack_indexes = np.random.randint(0,3, voxel_size_xy)
+    image_stack_indexes = np.random.randint(0,3, (10,12))
     material_names = ["A", "B", "C"]
     
     # Test stackmap_to_voxelmap
     voxel_geometry = stackmap_to_voxelmap(layer_thicknesses, voxel_size_xy, stacks, image_stack_indexes, material_names)
     
     assert isinstance(voxel_geometry, VoxelGeometry), "Result should be an instance of VoxelGeometry"
-    assert voxel_geometry.materials.shape == (10, 10, 4), "material_map should have the correct shape"
+    assert voxel_geometry.materials.shape == (10, 12, 4), "material_map should have the correct shape"
     assert not np.any(voxel_geometry.materials == -1), "No unassigned voxel positions should be present"
 
