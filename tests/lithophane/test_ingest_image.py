@@ -75,6 +75,6 @@ def test_stackmap_to_voxelmap():
     voxel_geometry = stackmap_to_voxelmap(layer_thicknesses, voxel_size_xy, stacks, image_stack_indexes, material_names)
     
     assert isinstance(voxel_geometry, VoxelGeometry), "Result should be an instance of VoxelGeometry"
-    assert voxel_geometry.materials.shape == (10, 12, 4), "material_map should have the correct shape"
+    assert voxel_geometry.materials.shape == (12, 10, 4), "material_map should have the correct shape"
     assert not np.any(voxel_geometry.materials == -1), "No unassigned voxel positions should be present"
 

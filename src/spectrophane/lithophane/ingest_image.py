@@ -57,12 +57,12 @@ def stackmap_to_voxelmap(layer_thicknesses: np.ndarray, voxel_size_xy: tuple[flo
     if isinstance(voxel_size_xy, float):
         voxel_size_xy = (voxel_size_xy, voxel_size_xy)
     
-    material_map = np.full((image_stack_indexes.shape[0], image_stack_indexes.shape[1], len(layer_thicknesses)), -1)
-    #loop over x, y, z
-    for x in range(material_map.shape[0]):
-        for y in range(material_map.shape[1]):
+    material_map = np.full((image_stack_indexes.shape[1], image_stack_indexes.shape[0], len(layer_thicknesses)), -1)
+    #loop over x, y, z. x is in width direction, y is in height direction, z goes upwards.
+    for x in range(material_map.shape[1]):
+        for y in range(material_map.shape[0]):
             stack_index = image_stack_indexes[x,y]
-            material_map[x,y] = stack_pixel_map[stack_index]
+            material_map[y,x] = stack_pixel_map[stack_index]
     
     assert not np.any(material_map == -1), "Mapping color to material stacks failed. Unassigned voxel position detected!"
 
