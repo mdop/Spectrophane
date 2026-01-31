@@ -49,8 +49,9 @@ def test_ascii_stl_output(tmp_path):
     assert text.count("vertex") == 72
 
 
-def test_binary_stl_output(tmp_path):
-    base_path = tmp_path / "model"
+@pytest.mark.parametrize("filename",  ["model", "model.stl"])
+def test_binary_stl_output(tmp_path, filename):
+    base_path = tmp_path / filename
 
     backend = STLTessellationBackend(base_path=str(base_path), material_names=["white"], binary=True)
 

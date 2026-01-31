@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import struct
+from pathlib import PosixPath, Path
 
 from spectrophane.lithophane.solid_generation import SolidPrimitive, Box, Prism
 
@@ -40,10 +41,13 @@ class STLTessellationBackend(SolidBackend):
             (3, 7, 4), (3, 4, 0),  # left
         ]
 
-    def __init__(self, base_path: str, material_names: list[str], binary: bool = True):
-        """base path is filename without file extension."""
+    def __init__(self, base_path: str | PosixPath, material_names: list[str], binary: bool = True):
+        """base path is filename with or without stl extension."""
         self._binary = binary
-        self._base_path = base_path
+        base_path = str(base_path)
+        if base_path.endswith(".stl"):
+            base_path = base_path[:-4] #sanitize filepath if stl is provided
+        self._base_path = str(base_path)
         self._material_names = material_names
         self._handlers = [None] * len(material_names)
         self._triangle_counts = [0] * len(material_names)

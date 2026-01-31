@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from spectrophane.core.dataclasses import VoxelGeometry, StackCandidates
-from spectrophane.lithophane.pipeline import export_geometry, transform_image
+from spectrophane.lithophane.pipeline import export_geometry, generate_lithophane_from_image
 from spectrophane.lithophane.ingest_image import image_to_stackmap, stackmap_to_voxelmap
 from spectrophane.lithophane.solid_generation import PerVoxelBoxBuilder
 from spectrophane.lithophane.export import STLTessellationBackend
@@ -19,6 +19,7 @@ def mock_geometry():
     )
 
 class MockInverter:
+    preferred_color_space = "xyz"
     def invert_color(self, colors: np.ndarray, max_suggested_stacks: int = 1, color_space: str = "xyz") -> tuple[StackCandidates, np.ndarray, np.ndarray]:
         stacks = np.array([[0,0],[0,1]])
         rgbs = np.array([[1,1,1],[254,254,254]])
@@ -69,17 +70,16 @@ def test_export_geometry(mock_geometry):
     assert "output_1.stl" in output_paths
 
 def test_transform_image_integrationtest(tmp_path, mock_image, mock_inverter):
-    output_basepath = tmp_path / "test.stl"
-    model_config = {"binary": True}
+    output_basepath = tmp_path / "test.stl" #check if optional file extension is correctly handled
+    material_names = ["MaterialA", "MaterialB"]
     target_width = 30
     target_height = 20
-    output_files, expected_rgb_img, score_img = transform_image(mock_image, (target_width, target_height),
+    output_files, expected_rgb_img, score_img = generate_lithophane_from_image(mock_image, (target_width, target_height),
                                                                 mock_inverter,
                                                                 np.array([0.1,0.2]), (0.4,0.4),
-                                                                ["MaterialA", "MaterialB"],
-                                                                output_basepath,
-                                                                model_config,
-                                                                voxel_pool_algorithm="single")
+                                                                material_names,
+                                                                PerVoxelBoxBuilder(),
+                                                                STLTessellationBackend(output_basepath, material_names, binary=True))
     
     assert len(output_files) == 2
     assert output_files[0].endswith("test_MaterialA.stl")

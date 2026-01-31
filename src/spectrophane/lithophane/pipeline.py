@@ -17,38 +17,23 @@ def export_geometry(geometry: VoxelGeometry, builder: SolidBuilder, export_backe
 
     return export_backend.end()
 
-def transform_image(image: ImageFile, resolution: tuple[int, int], 
-                    inverter: Inverter, 
-                    layer_thicknesses: np.ndarray, voxel_size_xy: tuple[float, float], 
-                    material_names: list[str],
-                    output_path: str, model_config: dict = {},
-                    voxel_pool_algorithm: str = "single",
-                    ) -> tuple[list[str], np.ndarray, np.ndarray]:
+def generate_lithophane_from_image(image: ImageFile, resolution: tuple[int, int], 
+                                    inverter: Inverter, 
+                                    layer_thicknesses: np.ndarray, voxel_size_xy: tuple[float, float], 
+                                    material_names: list[str],
+                                    builder: SolidBuilder,
+                                    export_backend: SolidBackend,
+                                    ) -> tuple[list[str], np.ndarray, np.ndarray]:
     """Complete lithophane generation pipeline from image to model file. Returns a list of strings with paths to the files, the expected image and a scoremap.
     Resolution should be (width, height), but return arrays are (height, width)!
     Output path should contain the output format. If multiple files are produced the material name is inserted with _ before the extension."""
     #process image data to voxel map
     image_array = format_image(image, resolution)
-    if isinstance(inverter, LUTInverter):
-        convert_xyz = False
-    else:
-        convert_xyz = True
+    convert_xyz = inverter.preferred_color_space == "xyz"
     unique_stacks, image_unique_color_indexes, calc_score_arr = image_to_stackmap(image_array, inverter, convert_xyz)
     voxelmap = stackmap_to_voxelmap(layer_thicknesses, voxel_size_xy, unique_stacks, image_unique_color_indexes, material_names)
 
-    #generate 3D model and save
-    if voxel_pool_algorithm == "single":
-        builder = PerVoxelBoxBuilder()
-    else:
-        raise NotImplementedError(f"Unknown voxel pooling algorithm {voxel_pool_algorithm}.")
-    
-    filename, file_extension = os.path.splitext(output_path)
-    if file_extension == ".stl":
-        binary = model_config.get("binary", True)
-        export_backend = STLTessellationBackend(filename, material_names, binary)
-    else:
-        raise NotImplementedError(f"Unknown model format {file_extension}.")
-    
+    #turn voxel map to lithophane models
     output_paths = export_geometry(voxelmap, builder, export_backend)
 
     #output image array preparation
