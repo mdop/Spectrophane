@@ -8,15 +8,17 @@ from spectrophane.evaluation.evaluator import Evaluator
 from spectrophane.inverse.stack_generation import StackGenerator
 
 class Inverter(ABC):
+    preferred_color_space = "xyz"
 
     @abstractmethod
-    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int, color_space: str) -> tuple[StackCandidates, np.ndarray, np.ndarray]:
+    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int, color_space: str | None) -> tuple[StackCandidates, np.ndarray, np.ndarray]:
         """Returns StackCandidates, request index array, and score array for a requested color batch."""
         ...
 
 
 class LUTInverter(Inverter):
     """Inverter that initially runs stack combinations to create a lookup table for RGB values"""
+    preferred_color_space = "rgb"
 
     def __init__(self, lut_compression_factor: int, stack_generator: StackGenerator, evaluator: Evaluator):
         self._stack_generator = stack_generator
@@ -64,16 +66,19 @@ class LUTInverter(Inverter):
         self._lut       = best_stack_idx.reshape(self._steps, self._steps, self._steps)
         self._lut_score = scores.reshape(self._steps, self._steps, self._steps)
 
-    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int = 1, color_space: str = "rgb") -> tuple[StackCandidates, np.ndarray, np.ndarray]:
+    def invert_color(self, colors: np.ndarray, max_suggested_stacks: int = 1, color_space: str | None = None) -> tuple[StackCandidates, np.ndarray, np.ndarray]:
         """
         Invert RGB using LUT. Returns StackCandidates, request index array, and score array. Can only return 1 stack per color.
         """
         # Map to compressed LUT index
+        if color_space is None:
+            color_space = self.preferred_color_space
+        
         if color_space == "rgb":
-            encode_rgb = colors
+            encoded_rgb = colors
         elif color_space == "xyz":
-            encode_rgb = encode_rgb(xyz_to_linrgb(colors))
-        lut_index = np.floor(encode_rgb / self._compression).astype(int)
+            encoded_rgb = encode_rgb(xyz_to_linrgb(colors))
+        lut_index = np.floor(encoded_rgb / self._compression).astype(int)
         lut_index = np.clip(lut_index, 0, self._steps - 1)
 
         stack_idx = self._lut[lut_index[:,0], lut_index[:,1], lut_index[:,2]]
