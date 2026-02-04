@@ -5,7 +5,7 @@ import jax
 from jax import jit
 import optax
 
-from spectrophane.core.dataclasses import MaterialParams
+from spectrophane.core.dataclasses import MaterialParams, WavelengthAxis, LightSources, Observers
 from spectrophane.color.conversions import spectrum_to_xyz
 from spectrophane.core.jax_utils import jaxify
 from spectrophane.io.resources import get_json_resource
@@ -29,17 +29,20 @@ def import_test_data(filename: str) -> Tuple[TrainingRefSpectraData, TrainingRef
     input_data = get_json_resource("material_data/"+filename)
     image_ref_data = parse_image_data(input_data)
     spectrum_ref_data = prepare_spectrum_data(input_data)
-    light_sources = parse_light_sources(input_data, spectrum_ref_data.min_wavelength, spectrum_ref_data.step_wavelength, spectrum_ref_data.fallback_spectrumlength)
-    observer = parse_observers(input_data, spectrum_ref_data.min_wavelength, spectrum_ref_data.step_wavelength, spectrum_ref_data.fallback_spectrumlength)
+    target_axis = WavelengthAxis(start=spectrum_ref_data.min_wavelength, step=spectrum_ref_data.step_wavelength, length=spectrum_ref_data.transmission_spectra.shape[1])
+    light_sources = parse_light_sources(input_data, target_axis)
+    observer = parse_observers(input_data, target_axis)
     return input_data["materials"], jaxify(image_ref_data), jaxify(spectrum_ref_data), jaxify(light_sources), jaxify(observer)
 
-def initialize_parameter(model: BaseTheory, material_count, min_wavelength, step_wavelength, spectrum_length):
+def initialize_parameter(model: BaseTheory, material_count, wavelength_axis: WavelengthAxis):
     """Initialize parameters for training. Prefers theory specific initialization. If not implemented defaults to set all parameters as 1"""
     if hasattr(model, "initial_guess"):
-        return model.initial_guess(material_count, min_wavelength, step_wavelength, spectrum_length)
+        return model.initial_guess(material_count, wavelength_axis)
     else:
-        return MaterialParams(absorption_coeff=jnp.ones((material_count, spectrum_length), dtype=jnp.float64),
-                              scattering_coeff=jnp.ones((material_count, spectrum_length), dtype=jnp.float64))
+        return MaterialParams(wl_start=wavelength_axis.start,
+                              wl_step=wavelength_axis.step,
+                              absorption_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64),
+                              scattering_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64))
 
 
 def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, ref_spectrum_data: TrainingRefSpectraData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
@@ -63,15 +66,18 @@ def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: Trai
     return total_loss
 
 
-def train_parameter(model_name: str, material_count, min_wavelength, step_wavelength, spectrum_length, image_ref, spectra_ref, light_sources, CIE1931, num_steps=10, lr=1e-1):
+def train_parameter(model_name: str, material_count: int, 
+                    wavelength_axis: WavelengthAxis, image_ref: TrainingRefImageData, spectra_ref: TrainingRefSpectraData, 
+                    light_sources: LightSources, CIE1931: Observers, 
+                    num_steps=10, lr=1e-1):
     losses = [0.0]*num_steps
     model = THEORY_REGISTRY[model_name]("jax")
-    parameter = initialize_parameter(model, material_count, min_wavelength, step_wavelength, spectrum_length)
+    parameter = initialize_parameter(model, material_count, wavelength_axis)
 
     optimizer = optax.adam(lr)
     opt_state = optimizer.init(parameter)
 
-    loss_fn = lambda p: compute_loss(model, p, image_ref, spectra_ref, light_sources, CIE1931)
+    loss_fn = lambda p: compute_loss(model, p, image_ref, spectra_ref, light_sources.spectra.values, CIE1931.spectra.values)
     grad_fn = jax.value_and_grad(loss_fn)
 
     @jit

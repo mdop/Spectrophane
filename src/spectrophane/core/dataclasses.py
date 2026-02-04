@@ -1,7 +1,7 @@
 from typing import Tuple, Optional, Sequence
 import numpy as np
 from numbers import Number
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class WavelengthAxis:
@@ -18,9 +18,13 @@ class WavelengthAxis:
         return self.start + self.step * np.arange(self.length)
     
     @classmethod
+    def empty(cls) -> "WavelengthAxis":
+        return cls(start=350, step=1.0, length=451)
+    
+    @classmethod
     def common(cls, axes: Sequence["WavelengthAxis"]) -> "WavelengthAxis | None":
         if not axes:
-            return None
+            return cls.empty()
 
         com_start = max(ax.start for ax in axes)
         com_step = min(ax.step for ax in axes)
@@ -34,14 +38,13 @@ class WavelengthAxis:
 
 @dataclass(slots=True)
 class SpectrumBlock:
-    DEFAULT_AXIS = WavelengthAxis(start=350, step=1, length=451) #up to including 800nm
     start: float
     step: float
     values: np.ndarray  # shape: (n_spectra, n_wavelengths)
 
     def __post_init__(self):
-        if self.values.ndim != 2:
-            raise ValueError("values must be 2D (n_spectra, n_wavelengths)")
+        if self.values.ndim < 2:
+            raise ValueError("values must be at least 2D (n_spectra, n_wavelengths)")
         if self.step <= 0:
             raise ValueError("step must be positive")
 
@@ -50,66 +53,62 @@ class SpectrumBlock:
         return WavelengthAxis(
             start=self.start,
             step=self.step,
-            length=self.values.shape[1],
+            length=self.values.shape[-1],
         )
 
     @property
     def n_spectra(self) -> int:
+        """returns number of entities in the first axis."""
         return self.values.shape[0]
     
     def resample(self, target_axis: WavelengthAxis) -> "SpectrumBlock":
+        """Returns a Spectrum block resampled for the given target_axis"""
         src_axis = self.axis
 
-        new_values = np.vstack([
-            np.interp(
-                target_axis.wavelengths,
-                src_axis.wavelengths,
-                spectrum,
-            )
-            for spectrum in self.values
-        ])
+        new_values = np.apply_along_axis(
+            lambda x: np.interp(target_axis.wavelengths, src_axis.wavelengths, x),
+            axis=-1,
+            arr=self.values
+        )
 
         return SpectrumBlock(start=target_axis.start, step=target_axis.step, values=new_values)
     
     @classmethod
     def merge_resample_spectra(cls, spectra: Sequence["SpectrumBlock"], axis: WavelengthAxis | None = None) -> "SpectrumBlock":
         """Function that merges and interpolates a list of spectra to a common axis into one block. if no wavelength axis is provided the common axis for the given sequence is used"""
-        if len(spectra) == 0:
-            if axis is None:
-                axis = cls.DEFAULT_AXIS
-            values = np.zeros((0,axis.length))
-            return SpectrumBlock(start=axis.start, step=axis.step, values=values)
         if axis is None:
             axes = [spectrum.axis for spectrum in spectra]
             axis = WavelengthAxis.common(axes)
-        spectrum_count = sum(spectrum.values.shape[0] for spectrum in spectra)
-        harmonized_values = np.zeros((spectrum_count, axis.length))
+        if len(spectra) == 0:
+            return SpectrumBlock(start=axis.start, step=axis.step, values=np.zeros((0, axis.length)))
+        total_entities = sum(spectrum.values.shape[0] for spectrum in spectra)
+        shared_shape = spectra[0].values.shape[1:-1]
+        output_shape = (total_entities, *shared_shape, axis.length)
+        harmonized_values = np.zeros(output_shape)
         start_spectrum_index = 0
         for block in spectra:
+            if block.values.shape[1:-1] != shared_shape:
+                raise ValueError(f"incompatible shape for merging spectra: got {block.values.shape[1:-1]} vs exected {shared_shape}")
             next_block_index = start_spectrum_index + block.values.shape[0]
             resampled_block = block.resample(axis)
             harmonized_values[start_spectrum_index:next_block_index] = resampled_block.values
             start_spectrum_index = next_block_index
         return SpectrumBlock(start=axis.start, step=axis.step, values=harmonized_values)
-    
-    @classmethod
-    def resample_block(cls, spectrum: "SpectrumBlock", axis: WavelengthAxis) -> "SpectrumBlock":
-        """Resamples a spectrum for a new wavelength axis"""
-        return cls.merge_resample_spectra([spectrum], axis)
+
 
 @dataclass
 class LightSources:
     """Dataclass representing light sources with their names and spectra.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     names: Tuple[str]
-    spectra: np.ndarray
+    spectra: SpectrumBlock
 
 @dataclass
 class Observers:
     """Dataclass representing observers with their names and spectra.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     names: Tuple[str]
-    spectra: np.ndarray
+    spectra: SpectrumBlock
 
 @dataclass
 class StackData:
@@ -149,7 +148,6 @@ class TrainingRefSpectraData:
     reflection_background: np.ndarray
     min_wavelength: Number
     step_wavelength: Number
-    fallback_spectrumlength: Number
 
 @dataclass
 class TrainingRefImageData:
@@ -166,8 +164,16 @@ class MaterialParams:
     Backend-neutral material parameter container.
     Defaults to NumPy arrays. If used with jax register as a pytree and convert arrays at the boundary.
     """
-    absorption_coeff: Optional[np.ndarray] = None
-    scattering_coeff: Optional[np.ndarray] = None
+    wl_start: Number
+    wl_step: Number
+    absorption_coeff: Optional[np.ndarray] | None = field(
+        default=None,
+        metadata={"deserialize": np.array}
+    )
+    scattering_coeff: Optional[np.ndarray] | None = field(
+        default=None,
+        metadata={"deserialize": np.array}
+    )
     model_type: Optional[str] = None  # "kubelka_munk", "saunderson", "monte_carlo"
 
 

@@ -27,22 +27,20 @@ def test_axis_get_common_wavelength_axis(wavelength_axes, ref_axis):
     assert result_axis.step == ref_axis.step
     assert result_axis.length == ref_axis.length
 
-def test_spectrum_block_resample():
-    original_values = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+@pytest.mark.parametrize("original_values, expected_values",
+                         [(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), np.array([[1.5, 2.0, 2.5, 3.0],[4.5, 5.0, 5.5, 6.0]])),
+                          (np.array([[[1,2,3],[4,5,6]],[[7,8,9],[10,11,12]],[[13,14,15],[16,17,18]]]),
+                           np.array([[[1.5,2,2.5,3],[4.5,5,5.5,6]],[[7.5,8,8.5,9],[10.5,11,11.5,12]],[[13.5,14,14.5,15],[16.5,17,17.5,18]]]))])
+def test_spectrum_block_resample_2D(original_values, expected_values):
     original_block = SpectrumBlock(start=0.0, step=1.0, values=original_values)
 
     target_axis = WavelengthAxis(start=0.5, step=0.5, length=4)
-    resampled_block = SpectrumBlock.resample_block(original_block, target_axis)
+    resampled_block = original_block.resample(target_axis)
 
     assert resampled_block.axis.start == target_axis.start
     assert resampled_block.axis.step == target_axis.step
     assert resampled_block.axis.length == target_axis.length
 
-    #Assume linear interpolation
-    expected_values = np.array([
-        [1.5, 2.0, 2.5, 3.0],
-        [4.5, 5.0, 5.5, 6.0]
-    ])
     np.testing.assert_allclose(resampled_block.values, expected_values)
 
 def test_spectrum_block_merge_resample_spectra():
@@ -87,14 +85,26 @@ def test_spectrum_block_merge_resample_common_axis():
     ])
     np.testing.assert_allclose(merged_block.values, expected_values)
 
+def test_spectrum_block_merge_resample_multidim():
+    block1_values = np.random.rand(4,3,100)
+    block1 = SpectrumBlock(start=0.0, step=1.0, values=block1_values)
+
+    block2_values = np.random.rand(1,3,100)
+    block2 = SpectrumBlock(start=0.0, step=1.0, values=block2_values)
+
+    merged_block = SpectrumBlock.merge_resample_spectra([block1, block2])
+
+    assert merged_block.values.shape == (5,3,100)
+
 def test_spectrum_block_merge_resample_empty_spectra():
     block_completely_empty = SpectrumBlock.merge_resample_spectra(spectra=[], axis=None)
     axis = WavelengthAxis(start=0, step=1, length=100)
     block_only_axis = SpectrumBlock.merge_resample_spectra(spectra=[], axis=axis)
+    default_axis = WavelengthAxis.empty()
 
-    assert block_completely_empty.start == SpectrumBlock.DEFAULT_AXIS.start
-    assert block_completely_empty.start == SpectrumBlock.DEFAULT_AXIS.start
-    assert block_completely_empty.values.shape == (0, SpectrumBlock.DEFAULT_AXIS.length)
+    assert block_completely_empty.start == default_axis.start
+    assert block_completely_empty.start == default_axis.start
+    assert block_completely_empty.values.shape == (0, default_axis.length)
     assert block_only_axis.start == axis.start
     assert block_only_axis.start == axis.start
     assert block_only_axis.values.shape == (0, axis.length)

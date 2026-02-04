@@ -16,7 +16,7 @@ def register_with_jax():
     """
     try:
         jax.tree_util.register_dataclass(dc.StackData)
-        jax.tree_util.register_dataclass(dc.MaterialParams, data_fields=["absorption_coeff", "scattering_coeff"], meta_fields=["model_type"])
+        jax.tree_util.register_dataclass(dc.MaterialParams, data_fields=["absorption_coeff", "scattering_coeff"], meta_fields=["model_type", "wl_start", "wl_step"])
     except Exception:
         pass
 

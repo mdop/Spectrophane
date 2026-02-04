@@ -12,7 +12,7 @@ def config():
     res["theory"] = "kubelka_munk"
     res["view_geometry"] = "reflection"
     res["cache"] = ForwardCache("dict")
-    res["material_parameters"] = MaterialParams(absorption_coeff=np.random.random((3,10)), scattering_coeff=np.random.random((3,10)), model_type="kubelka_munk")
+    res["material_parameters"] = MaterialParams(wl_start= 350, wl_step=10, absorption_coeff=np.random.random((3,10)), scattering_coeff=np.random.random((3,10)), model_type="kubelka_munk")
     res["illuminator"] = np.ones(10)
     res["observer"] = np.ones((3,10))
     res["step_wavelength"] = 1

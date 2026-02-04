@@ -20,9 +20,6 @@ class BaseTheory:
         """Returns reflection spectrum for a given stack. Only pass one stack to the function!"""
         raise NotImplementedError
 
-    def initial_guess(self, material_count, min_wavelength, step_wavelength, spectrum_length):
-        """Return an OpticalParams object as initial values."""
-        raise NotImplementedError
 
 
 THEORY_REGISTRY: dict[str, BaseTheory] = {}

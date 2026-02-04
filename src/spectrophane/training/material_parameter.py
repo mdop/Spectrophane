@@ -4,9 +4,22 @@ import shutil
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dataclasses
+from numbers import Number
+from typing import Optional
+from math import ceil
 
-from spectrophane.core.dataclasses import MaterialParams, SpectralBlock
-from spectrophane.io.resources import write_json_resource
+from spectrophane.core.dataclasses import MaterialParams, WavelengthAxis
+from spectrophane.io.resources import write_json_resource, get_json_resource
+
+
+@dataclasses.dataclass
+class SpectrumPlotLineData:
+    wavelengths: np.ndarray
+    values: np.ndarray
+    material_id: Number
+    material_name: str
+    plotcolor: str #HTML hex color
+    parameter: str #What the series description should be
 
 
 def color_str(rgb: jnp.ndarray):
@@ -41,34 +54,38 @@ def print_color_comparison(calculated_colors: jnp.ndarray, actual_colors: jnp.nd
         print(real)
 
 
-def extract_spectral_blocks(params, metadata, wavelengths):
+def extract_spectral_plot_series(params:MaterialParams, metadata: list[dict[str]], field_filter: list[str] = []) -> list[SpectrumPlotLineData]:
+    """Parses material parameter and their metadata to create a list of plot data of all fields. If field filter is empty all fields are accepted, otherwise only field names contained in the list are appended."""
+    if len(metadata) != params.absorption_coeff.shape[0]:
+        raise ValueError("Cannot zip metadata and material parameter, they have different lengths!")
     blocks = []
+    wavelength_axis = WavelengthAxis(start=params.wl_start, step=params.wl_step, length=params.absorption_coeff.shape[1])
+    wavelengths = wavelength_axis.wavelengths
 
-    for p, meta in zip(params, metadata):
-        # Iterate through all fields of the params object
-        for field_name, field_value in p.__dict__.items():
-            if field_value is not None:
-                blocks.append(
-                    SpectralBlock(
-                        wavelengths=wavelengths,
-                        values=np.asarray(field_value),
-                        material_id=meta["id"],
-                        material_name=meta["name"],
-                        plotcolor=meta["plotcolor"],
-                        parameter=field_name,
-                    )
-                )
-
+    for i in range(len(metadata)):
+        for field_name, field_value in params.__dict__.items():
+            if (len(field_filter) == 0 or field_name in field_filter) and isinstance(field_value, (np.ndarray, jnp.ndarray)):
+                meta = metadata[i]
+                blocks.append(SpectrumPlotLineData( wavelengths=wavelengths,
+                                                    values=np.asarray(field_value[i]),
+                                                    material_id=meta["id"],
+                                                    material_name=meta["name"],
+                                                    plotcolor=meta["plotcolor"],
+                                                    parameter=field_name))
     return blocks
 
-def plot_parameter(blocks: list[SpectralBlock], *, x_label: str = "Wavelength (nm)", y_label: str = "Value"):
+def plot_parameter(series: list[SpectrumPlotLineData], *, rows: int = 0, x_label: str = "Wavelength (nm)", y_label: str = "Value") -> go.Figure:
+    """Generates a plotly plot with subplots for each parameter"""
     # Determine facet order
-    parameters = sorted({b.parameter for b in blocks})
+    parameters = sorted({b.parameter for b in series})
     
-    fig = make_subplots(rows=len(parameters), cols=1, shared_xaxes=True, subplot_titles=parameters)
+    if rows <= 0:
+        rows = len(parameters)
+    cols = ceil(len(parameters) / rows)
+    fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, subplot_titles=parameters)
     row_index = {p: i + 1 for i, p in enumerate(parameters)}
 
-    for b in blocks:
+    for b in series:
         fig.add_trace(
             go.Scatter(x=b.wavelengths, y=b.values, mode="lines", name=b.material_name, legendgroup=b.material_id, line=dict(color=f"#{b.plotcolor}")),
             row=row_index[b.parameter],
@@ -82,20 +99,36 @@ def plot_parameter(blocks: list[SpectralBlock], *, x_label: str = "Wavelength (n
 
 def save_parameter(resource_path: str, material_data: list, parameter: MaterialParams, no_overwrite: bool = True):
     """Serializes trained parameter set to json and saves to file. Filepath is relative to [resources]/material_data/"""
-    result = {}
-    result["materials"] = material_data
-    result["parameter"] = {}
-    param_dict = result["parameter"]
+    param_dict = {}
+    param_dict["materials"] = material_data
+    param_dict["wl_start"] = parameter.wl_start
+    param_dict["wl_step"] = parameter.wl_step
+    param_dict["parameter"] = {}
     for field in dataclasses.fields(parameter):
         value = getattr(parameter, field.name)
         #arrays to list, otherwise use value directly
-        if isinstance(value, jnp.ndarray):
-            param_dict[field.name] = value.tolist()
+        if isinstance(value, (jnp.ndarray, np.ndarray)):
+            param_dict["parameter"][field.name] = value.tolist()
         else:
-            param_dict[field.name] = value
-    #################TODO: add wavelength data!
-    write_json_resource(resource_path, result, no_overwrite)
+            param_dict["parameter"][field.name] = value
+    write_json_resource(resource_path, param_dict, no_overwrite)
     
 
-def load_parameter():
-    pass
+def load_parameter(resource_path: str) -> MaterialParams:
+    """deserializes a training parameter file. Filepath is relative to [resources]/material_data/"""
+    param_dict = get_json_resource(resource_path)
+    result = MaterialParams(wl_start=param_dict["parameter"]["wl_start"],
+                            wl_step=param_dict["parameter"]["wl_step"])
+    for field in dataclasses.fields(result):
+        if field.name not in param_dict["parameter"]:
+            setattr(result, field.name, None)
+            continue
+
+        value = param_dict["parameter"][field.name]
+
+        deserializer = field.metadata.get("deserialize")
+        if deserializer is not None and value is not None:
+            value = deserializer(value)
+
+        setattr(result, field.name, value)
+    return result

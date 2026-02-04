@@ -4,6 +4,7 @@ import pytest
 
 from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb
 from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
+from spectrophane.core.dataclasses import SpectrumBlock, WavelengthAxis
 
 @pytest.mark.parametrize("func", [
     (linrgb_to_xyz),
@@ -91,12 +92,14 @@ def test_spectrum_to_xyz_jnp():
 
 def test_spectrum_to_xyz_validate_calculation():
     """THIS TEST RELIES ON EXTERNAL DATA! Verifies calculation of xyz values by calculating xyz value of D65 illuminant with CIE1931 observer in wavelength range 360nm to 830nm."""
-    light_list, light_arr = _import_CIE_light_sources(360, 1, 471)
-    obs_list, CIE_obs = _import_CIE_observers(360, 1, 471)
+    light_list, light_blocks = _import_CIE_light_sources()
+    harmonized_light_blocks = SpectrumBlock.merge_resample_spectra(light_blocks, WavelengthAxis(360, 1, 471))
+    obs_list, CIE_obs_blocks = _import_CIE_observers()
+    harmonized_obs_blocks = SpectrumBlock.merge_resample_spectra(CIE_obs_blocks, WavelengthAxis(360, 1, 471))
     D65_index = light_list.index("D65")
     CIE1931_index = obs_list.index("CIE1931")
-    D65 = light_arr[D65_index]
-    CIE1931 = CIE_obs[CIE1931_index]
+    D65 = harmonized_light_blocks.values[D65_index]
+    CIE1931 = harmonized_obs_blocks.values[CIE1931_index]
     material = np.ones_like(D65)
     result = spectrum_to_xyz(material, D65, CIE1931, 1)
     #according to wikipedia XYZ coordinates of D65 with 2° observer is (95.047, 100, 108.883)

@@ -1,17 +1,15 @@
 import numpy as np
 from numbers import Number
-from typing import Tuple
 
-from spectrophane.core.dataclasses import LightSources, Observers
+from spectrophane.core.dataclasses import LightSources, Observers, WavelengthAxis, SpectrumBlock
 from spectrophane.io.resources import get_resource_path, get_json_resource
-from spectrophane.training.ingest_spectra import reshape_spectrum
 
 
-def _import_CIE_light_sources(min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[str]:
+def _import_CIE_light_sources() -> tuple[tuple[str], tuple[SpectrumBlock]]:
     """Imports CIE light sources for use in light source parsing."""
     CIE_metadata = get_json_resource("CIE/data.json")
     ids = [""] * len(CIE_metadata["light_sources"])
-    intensities = np.zeros((len(CIE_metadata["light_sources"]), spectrum_length))
+    spectra = []
     for i, (id, filename) in enumerate(CIE_metadata["light_sources"].items()):
         ids[i] = id
         #parse and reshape intensities
@@ -21,14 +19,15 @@ def _import_CIE_light_sources(min_wavelength: Number, step_wavelength: Number, s
         data = np.loadtxt(resource_path, delimiter=",", dtype=np.float32)
         raw_min_wavelength = data[0,0]
         raw_step_wavelength = data[1,0] - data[0,0]
-        intensities[i] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,1], min_wavelength, step_wavelength, spectrum_length)
-    return tuple(ids), intensities
+        intensity_values = data[:,1].reshape(1,data.shape[0])
+        spectra.append(SpectrumBlock(start=raw_min_wavelength, step=raw_step_wavelength, values=intensity_values))
+    return tuple(ids), tuple(spectra)
 
-def _import_CIE_observers(min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Tuple[str]:
+def _import_CIE_observers() -> tuple[tuple[str], tuple[SpectrumBlock]]:
     """Imports CIE observer for use in light source parsing."""
     CIE_metadata = get_json_resource("CIE/data.json")
     ids = [""] * len(CIE_metadata["observers"])
-    intensities = np.zeros((len(CIE_metadata["observers"]), 3, spectrum_length))
+    observer = []
     for i, (id, filename) in enumerate(CIE_metadata["observers"].items()):
         ids[i] = id
         #parse and reshape intensities
@@ -38,33 +37,34 @@ def _import_CIE_observers(min_wavelength: Number, step_wavelength: Number, spect
         data = np.loadtxt(resource_path, delimiter=",", dtype=np.float32)
         raw_min_wavelength = data[0,0]
         raw_step_wavelength = data[1,0] - data[0,0]
-        intensities[i,0] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,1], min_wavelength, step_wavelength, spectrum_length)
-        intensities[i,1] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,2], min_wavelength, step_wavelength, spectrum_length)
-        intensities[i,2] = reshape_spectrum(raw_min_wavelength, raw_step_wavelength, data[:,3], min_wavelength, step_wavelength, spectrum_length)
-    return tuple(ids), intensities
+        sensitivity = np.zeros((1,3,data.shape[0]))
+        sensitivity[0,0] = data[:,1]
+        sensitivity[0,1] = data[:,2]
+        sensitivity[0,2] = data[:,3]
+        observer.append(SpectrumBlock(start=raw_min_wavelength, step=raw_step_wavelength, values=sensitivity))
+    return tuple(ids), observer
 
-def parse_light_sources(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> LightSources:
+def parse_light_sources(config_data: dict, wavelength_axis: WavelengthAxis) -> LightSources:
     """Returns a tuple of light source names and a numpy array containing harmonized spectra as specified in input data"""
-    default_ids, default_intensities = _import_CIE_light_sources(min_wavelength, step_wavelength, spectrum_length)
-    if "light_sources" not in config_data:
-        return LightSources(default_ids, default_intensities)
-    output_arr = np.zeros((len(config_data["light_sources"]), spectrum_length))
-    source_names = tuple(source["id"] for source in config_data["light_sources"])
-    for i, source in enumerate(config_data["light_sources"]):
-        output_arr[i, :] = reshape_spectrum(source["wl_start"], source["wl_step"], source["value"], min_wavelength, step_wavelength, spectrum_length)
-    return LightSources(default_ids + source_names, np.vstack([default_intensities, output_arr]))
+    ids, intensities = _import_CIE_light_sources()
+    if "light_sources" in config_data:
+        for source in config_data["light_sources"]:
+            ids += (source["id"],)
+            vals = np.array(source["value"])
+            vals = vals.reshape(1, vals.shape[0])
+            intensities += (SpectrumBlock(start=source["wl_start"], step=source["wl_step"], values=vals),)
+    return LightSources(ids, SpectrumBlock.merge_resample_spectra(intensities, axis=wavelength_axis))
 
-def parse_observers(config_data: dict, min_wavelength: Number, step_wavelength: Number, spectrum_length: int) -> Observers:
+
+def parse_observers(config_data: dict, wavelength_axis: WavelengthAxis) -> Observers:
     """Returns a tuple of observer names and a numpy array containing harmonized spectra as specified in input data"""
-    cie_observer_list, cie_observer_arr = _import_CIE_observers(min_wavelength,step_wavelength, spectrum_length)
-    if "observer" not in config_data:
-        return Observers(cie_observer_list, cie_observer_arr)
-    observer_arr = np.zeros((len(config_data["observer"]), 3, spectrum_length))
-    observer_names = tuple(source["id"] for source in config_data["observer"])
-    for i, observer in enumerate(config_data["observer"]):
-        observer_arr[i, 0, :] = reshape_spectrum(observer["wl_start"], observer["wl_step"], observer["value"][0], min_wavelength, step_wavelength, spectrum_length)
-        observer_arr[i, 1, :] = reshape_spectrum(observer["wl_start"], observer["wl_step"], observer["value"][1], min_wavelength, step_wavelength, spectrum_length)
-        observer_arr[i, 2, :] = reshape_spectrum(observer["wl_start"], observer["wl_step"], observer["value"][2], min_wavelength, step_wavelength, spectrum_length)
-    total_observer_names = cie_observer_list + observer_names
-    total_observer_arr = np.vstack([cie_observer_arr, observer_arr])
-    return Observers(total_observer_names, total_observer_arr)
+    ids, observer_data = _import_CIE_observers()
+    if "observer" in config_data:
+        for observer in config_data["observer"]:
+            sensitivity = np.array(observer["value"])
+            sensitivity = np.reshape(sensitivity, (1, 3, sensitivity.shape[1]))
+
+            ids += (observer["id"],)
+            observer_data += (SpectrumBlock(start=observer["wl_start"], step=observer["wl_step"], values=sensitivity),)
+    
+    return Observers(ids, SpectrumBlock.merge_resample_spectra(observer_data, wavelength_axis))

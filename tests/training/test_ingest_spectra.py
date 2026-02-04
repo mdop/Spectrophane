@@ -3,9 +3,8 @@ import numpy as np
 import json
 import copy
 from unittest.mock import ANY
+from spectrophane.core.dataclasses import WavelengthAxis
 from spectrophane.training.ingest_spectra import (
-        get_common_wavelength_space,
-        reshape_spectrum,
         process_spectrum_list,
         prepare_spectrum_data,
         TrainingRefSpectraData
@@ -113,52 +112,28 @@ def mock_combined_source_file(mock_transmission_source_file, mock_reflection_sou
     data["spectra"]["reflection"] = mock_reflection_source_file["spectra"]["reflection"]
     return data
 
+def test_process_spectrum_list_empty(mock_empty_source_file):
+    empty_stacks, empty_spectra, empty_background = process_spectrum_list(mock_empty_source_file["spectra"].get("transmission", []), mock_empty_source_file.get("materials", []))
+    assert isinstance(empty_stacks, StackData)
+    assert len(empty_spectra) == 0
+    assert len(empty_background) == 0
 
-@pytest.mark.parametrize(("min", "step", "lengths", "ref_min", "ref_step", "ref_length"), [
-                            ((0,0,0,0),(1,1,1,1),(10,20,30,40),0,1,10),
-                            ((0,3,2,1),(1,1,1,1),(10,10,10,10),3,1,7),
-                            ((0,0,0,0),(4,2,3,1),(10,10,10,10),0,1,10),
-                            ((100,90,110,105),(1,2,3,1),(30,20,40,50),110,1,19),
-                            ((100,90,110,105),(5,2,10,5),(11,100,10,50),110,2,21)
-                        ])
-def test_get_common_wavelength_space(min, step, lengths, ref_min, ref_step, ref_length):
-    res_min, res_step, res_length = get_common_wavelength_space(min, step, lengths)
-    assert res_min == ref_min
-    assert res_step == ref_step
-    assert res_length == ref_length
-
-@pytest.mark.parametrize(("old_min_wavelength, old_step_wavelength, old_values, new_min_wavelength, new_step_wavelength, new_length, new_values"), [
-                            (0,1,[1,2,3,4,5,6,7,8,9,10], 4,2,3,[5,7,9]),
-                            (0,2,[1,2,3,4,5,6,7,8,9,10], 2,2,4,[2,3,4,5])
-                        ])
-def test_reshape_spectrum(old_min_wavelength, old_step_wavelength, old_values, new_min_wavelength, new_step_wavelength, new_length, new_values):
-    result = reshape_spectrum(old_min_wavelength, old_step_wavelength, old_values, new_min_wavelength, new_step_wavelength, new_length)
-    new_values_arr = np.array(new_values)
-    assert (result == new_values_arr).all()
-
-def test_process_spectrum_list(mock_empty_source_file, mock_transmission_source_file):
-    empty_result = process_spectrum_list(mock_empty_source_file["spectra"].get("transmission", {},), mock_empty_source_file.get("materials", {}), None, None, None)
-    assert isinstance(empty_result[0], StackData)
-    assert empty_result[1].size == 0
-    assert empty_result[2].size == 0
-
-    transmission_result = process_spectrum_list(mock_transmission_source_file["spectra"].get("transmission", {},), mock_transmission_source_file.get("materials", {}), 410, 1, 80)
-    assert isinstance(transmission_result[0], StackData)
-    assert transmission_result[1].shape == (5,80)
-    assert transmission_result[2].shape == transmission_result[1].shape
-    assert np.all(transmission_result[2] == 0)
+def test_process_spectrum_list_empty(mock_transmission_source_file):
+    transmission_stacks, transmission_spectra, _ = process_spectrum_list(mock_transmission_source_file["spectra"].get("transmission", {},), mock_transmission_source_file.get("materials", {}))
+    assert isinstance(transmission_stacks, StackData)
+    assert len(transmission_spectra) == 5
 
 def test_process_spectrum_list_background(mock_reflection_source_file):
-    reflection_result = process_spectrum_list(mock_reflection_source_file["spectra"].get("reflection", {},), mock_reflection_source_file.get("materials", {}), 410, 1, 80)
-    assert reflection_result[2].shape == reflection_result[1].shape
-    assert np.all(reflection_result[2][0,:] == 0)
-    assert np.all(reflection_result[2][1,:] == 1)
-    assert np.all(reflection_result[2][2,:] == 0)
-    assert np.all(reflection_result[2][3,:] == 0.5)
+    reflection_stacks, reflection_spectra, reflection_backgrounds = process_spectrum_list(mock_reflection_source_file["spectra"].get("reflection", []), mock_reflection_source_file.get("materials", []))
+    assert len(reflection_backgrounds) == len(reflection_spectra)
+    assert np.all(reflection_backgrounds[0].values == 0)
+    assert np.all(reflection_backgrounds[1].values == 1)
+    assert np.all(reflection_backgrounds[2].values == 0)
+    assert np.all(reflection_backgrounds[3].values == 0.5)
 
-def test_prepare_spectrum_data_empty(mocker, mock_empty_source_file):
+def test_prepare_spectrum_data_empty(mock_empty_source_file):
     empty_result = prepare_spectrum_data(mock_empty_source_file)
-    assert empty_result.min_wavelength is None
+    assert empty_result.min_wavelength > 0
     assert empty_result.transmission_spectra.size == 0
     assert empty_result.reflection_spectra.size == 0
 

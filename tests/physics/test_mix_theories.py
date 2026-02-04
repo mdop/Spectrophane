@@ -106,10 +106,11 @@ def mock_stack(xp):
 
 @pytest.fixture
 def mock_material_params(xp):
-    return MaterialParams(
-        absorption_coeff=xp.array([[0.1, 0.2, 0.3], [0.3, 0.4, 0.5]]), 
-        scattering_coeff=xp.array([[0.5, 0.6, 0.7], [0.7, 0.8, 0.9]])
-    )
+    return MaterialParams(wl_start=350,
+                          wl_step=10,
+                          absorption_coeff=xp.array([[0.1, 0.2, 0.3], [0.3, 0.4, 0.5]]), 
+                          scattering_coeff=xp.array([[0.5, 0.6, 0.7], [0.7, 0.8, 0.9]]),
+                          )
 
 def test_KM_stack_transfer_matrix_multiple_layers(KM_instance: KubelkaMunk, mock_stack, mock_material_params, xp):
     # Mock data for multiple layers
@@ -117,15 +118,11 @@ def test_KM_stack_transfer_matrix_multiple_layers(KM_instance: KubelkaMunk, mock
     assert result.shape == (2, 2, 3), "Transfer matrix should be 2x2"
     assert not xp.isnan(result).any(), "Transfer matrix should not contain NaN values"
 
-def test_KM_stack_transfer_matrix_single_layer(KM_instance: KubelkaMunk, xp):
+def test_KM_stack_transfer_matrix_single_layer(KM_instance: KubelkaMunk, xp, mock_material_params: MaterialParams):
     # Mock data for a single layer
     stack = StackData(material_nums=xp.array([0]), thicknesses=xp.array([1.0]))
-    params = MaterialParams(
-        absorption_coeff=xp.array([[0.1, 0.2, 0.3]]), 
-        scattering_coeff=xp.array([[0.5, 0.6, 0.7]])
-    )
-    
-    result = KM_instance._stack_transfer_matrix(stack, params)
+
+    result = KM_instance._stack_transfer_matrix(stack, mock_material_params)
     assert result.shape == (2, 2, 3), "Transfer matrix should be 2x2"
     assert not xp.isnan(result).any(), "Transfer matrix should not contain NaN values"
 
@@ -137,15 +134,11 @@ def test_KM_stack_transfer_matrix_zero_thickness(KM_instance: KubelkaMunk, mock_
     assert result.shape == (2, 2, 3), "Transfer matrix should be 2x2"
     assert not xp.isnan(result).any(), "Transfer matrix should not contain NaN values"
 
-def test_KM_stack_transfer_matrix_large_number_of_layers(KM_instance: KubelkaMunk, xp):
+def test_KM_stack_transfer_matrix_large_number_of_layers(KM_instance: KubelkaMunk, xp, mock_material_params: MaterialParams):
     # Mock data with a large number of layers
     stack = StackData(material_nums=xp.array([0] * 100), thicknesses=xp.array([1.0] * 100))
-    params = MaterialParams(
-        absorption_coeff=xp.array([[0.1, 0.2, 0.3]]), 
-        scattering_coeff=xp.array([[0.5, 0.6, 0.7]])
-    )
     
-    result = KM_instance._stack_transfer_matrix(stack, params)
+    result = KM_instance._stack_transfer_matrix(stack, mock_material_params)
     assert result.shape == (2, 2, 3), "Transfer matrix should be 2x2"
     assert not xp.isnan(result).any(), "Transfer matrix should not contain NaN values"
 
@@ -153,7 +146,7 @@ def test_KM_stack_transfer_matrix_large_number_of_layers(KM_instance: KubelkaMun
 @pytest.fixture
 def mock_black_top_white_bottom(xp):
     stack = StackData(material_nums=xp.array([0,1]), thicknesses=xp.array([1,1]))
-    param = MaterialParams(absorption_coeff=xp.array([[0.001]*100, [3]*100]), scattering_coeff=xp.array([[10]*100, [10]*100]))
+    param = MaterialParams(wl_start= 350, wl_step=10, absorption_coeff=xp.array([[0.001]*100, [3]*100]), scattering_coeff=xp.array([[10]*100, [10]*100]))
     return stack, param
 
 @pytest.fixture
