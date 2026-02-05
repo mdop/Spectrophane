@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from dataclasses import dataclass, fields
 
-from spectrophane.training.material_parameter import SpectrumPlotLineData, print_color_comparison, color_str, save_parameter, extract_spectral_plot_series, plot_parameter, load_parameter
+from spectrophane.training.material_parameter import SpectrumPlotLineData, print_color_comparison, color_str, serialize_parameter, extract_spectral_plot_series, plot_parameter, deserialize_parameter
 from spectrophane.core.dataclasses import MaterialParams
 
 
@@ -132,15 +132,8 @@ def test_plot_parameter():
     assert fig.data[1].name == "Material B"
 
 
-def test_save_parameter(tmpdir, mocker, mock_material_param, mock_material_metadata):
-    filename = os.path.join(tmpdir, "test_params.json")
-    no_overwrite = True
-    mocker.patch("spectrophane.io.resources.get_user_resource_path", return_value=Path(filename))
-
-    save_parameter(filename, mock_material_metadata, mock_material_param, no_overwrite)
-
-    with open(filename, "r") as f:
-        result = json.load(f)
+def test_serialize_parameter(mock_material_param, mock_material_metadata):
+    result = serialize_parameter(mock_material_metadata, mock_material_param)
 
     assert result["materials"] == mock_material_metadata
     assert result["parameter"]["param1"] == mock_material_param.param1
@@ -148,25 +141,7 @@ def test_save_parameter(tmpdir, mocker, mock_material_param, mock_material_metad
     assert result["parameter"]["param3"] == mock_material_param.param3.tolist()
     assert result["parameter"]["absorption_coeff"] == mock_material_param.absorption_coeff.tolist()
 
-def test_save_parameter_overwrite(tmpdir, mocker, mock_material_param, mock_material_metadata):
-    filename = os.path.join(tmpdir, "test_params.json")
-    no_overwrite = False
-    mocker.patch("spectrophane.io.resources.get_user_resource_path", return_value=Path(filename))
-
-    save_parameter(filename, mock_material_metadata, mock_material_param, no_overwrite)
-    mock_material_param.param1 = 20
-    save_parameter(filename, mock_material_metadata, mock_material_param, no_overwrite)
-
-    with open(filename, "r") as f:
-        result = json.load(f)
-
-    assert result["parameter"]["param1"] == 20
-
-    no_overwrite = True
-    with pytest.raises(FileExistsError):
-        save_parameter(filename, mock_material_metadata, mock_material_param, no_overwrite)
-
-def test_load_parameter(mocker, mock_material_metadata):
+def test_load_parameter(mock_material_metadata):
     file_dict = {}
     file_dict["materials"] = mock_material_metadata
     file_dict["parameter"] = {  
@@ -174,23 +149,20 @@ def test_load_parameter(mocker, mock_material_metadata):
                                 "wl_start": 400,
                                 "wl_step": 10,
                              }
-    mocker.patch("spectrophane.training.material_parameter.get_json_resource", return_value=file_dict)
     
-    result = load_parameter("mock.json")
+    result = deserialize_parameter(file_dict)
     print("TYPE:", type(result.absorption_coeff))
     assert isinstance(result.absorption_coeff, np.ndarray)
     assert np.allclose(result.absorption_coeff, np.array([[1, 2, 3, 4, 5, 6]] * 2))
     assert result.scattering_coeff is None
 
-def test_parameter_save_loading(mocker, mock_material_metadata, tmp_path):
+def test_parameter_serialize_deserialize(mock_material_metadata):
     parameter = MaterialParams( wl_start=400,
                                 wl_step=10,
                                 absorption_coeff=np.array([[1,2,3,4,5,6]]*2))
-    mock_path = tmp_path / "test.json"
-    mocker.patch("spectrophane.io.resources.get_user_resource_path", return_value=mock_path)
 
-    save_parameter("test", mock_material_metadata, parameter)
-    result = load_parameter("mocked_test") # should complain if patching failed
+    serialized = serialize_parameter(mock_material_metadata, parameter)
+    result = deserialize_parameter(serialized) # should complain if patching failed
 
     for field in fields(result):
         if isinstance(getattr(parameter, field.name), np.ndarray):

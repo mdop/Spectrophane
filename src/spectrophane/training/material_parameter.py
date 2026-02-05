@@ -97,7 +97,7 @@ def plot_parameter(series: list[SpectrumPlotLineData], *, rows: int = 0, x_label
     return fig
 
 
-def save_parameter(resource_path: str, material_data: list, parameter: MaterialParams, no_overwrite: bool = True):
+def serialize_parameter(material_data: list, parameter: MaterialParams) -> dict:
     """Serializes trained parameter set to json and saves to file. Filepath is relative to [resources]/material_data/"""
     param_dict = {}
     param_dict["materials"] = material_data
@@ -111,12 +111,11 @@ def save_parameter(resource_path: str, material_data: list, parameter: MaterialP
             param_dict["parameter"][field.name] = value.tolist()
         else:
             param_dict["parameter"][field.name] = value
-    write_json_resource(resource_path, param_dict, no_overwrite)
+    return param_dict
     
 
-def load_parameter(resource_path: str) -> MaterialParams:
-    """deserializes a training parameter file. Filepath is relative to [resources]/material_data/"""
-    param_dict = get_json_resource(resource_path)
+def deserialize_parameter(param_dict: dict) -> MaterialParams:
+    """Deserializes saved training parameter data."""
     result = MaterialParams(wl_start=param_dict["parameter"]["wl_start"],
                             wl_step=param_dict["parameter"]["wl_step"])
     for field in dataclasses.fields(result):

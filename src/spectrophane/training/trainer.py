@@ -24,9 +24,8 @@ from spectrophane.core.jax_utils import register_with_jax
 register_with_jax()
 
 
-def import_test_data(filename: str) -> Tuple[TrainingRefSpectraData, TrainingRefImageData]:
+def import_test_data(input_data: dict) -> Tuple[TrainingRefSpectraData, TrainingRefImageData]:
     """Imports data for training spectra from the specified file."""
-    input_data = get_json_resource("material_data/"+filename)
     image_ref_data = parse_image_data(input_data)
     spectrum_ref_data = prepare_spectrum_data(input_data)
     target_axis = WavelengthAxis(start=spectrum_ref_data.min_wavelength, step=spectrum_ref_data.step_wavelength, length=spectrum_ref_data.transmission_spectra.shape[1])

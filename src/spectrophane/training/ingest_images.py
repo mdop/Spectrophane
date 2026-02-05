@@ -12,10 +12,9 @@ from spectrophane.color.spectral_helper import parse_light_sources
 
 
 
-def raw_to_linear_rgb(filename: str) -> np.ndarray:
+def raw_to_linear_rgb(filepath: str) -> np.ndarray:
     """Takes filename of the raw image file and converts content to linear RGB image in numpy float32 array in [0,1]"""
-    total_path = get_resource_path("material_data/images/" + filename)
-    with rawpy.imread(total_path) as raw:
+    with rawpy.imread(filepath) as raw:
         rgb = raw.postprocess(
             use_camera_wb=False,
             no_auto_bright=True,
@@ -24,10 +23,9 @@ def raw_to_linear_rgb(filename: str) -> np.ndarray:
         ).astype(np.float32) / 65535.0
     return rgb
 
-def rgb_image_to_linrgb(filename: str) -> np.ndarray:
+def rgb_image_to_linrgb(filepath: str) -> np.ndarray:
     """Takes image path and transforms it into linear rgb. Assumes an 8-bit image."""
-    total_path = get_resource_path("material_data/images/" + filename)
-    image = np.array(Image.open(total_path), dtype=np.float32) / 255.0
+    image = np.array(Image.open(filepath), dtype=np.float32) / 255.0
     lin_image = decode_rgb(image)
     return lin_image
 
@@ -99,7 +97,11 @@ def parse_image_data(input_data):
         black_rois = image_data["black_refs"]
         color_rois = [area["roi"]               for area in image_data["measurement_areas"]]
         image_stack_dictlist = [area["stack"]   for area in image_data["measurement_areas"]]
-        image_array = import_image(image_data["filename"])
+        if image_data.get("internal_path", True):
+            filepath = get_resource_path("material_data/images/" + image_data["filename"])
+        else:
+            filepath = image_data["filename"]
+        image_array = import_image(filepath)
         xyz_imagecolors = process_image_to_xyz(image_array, white_rois, black_rois, color_rois)
         xyz_colors.extend(xyz_imagecolors)
         stack_dictlist.extend(image_stack_dictlist)

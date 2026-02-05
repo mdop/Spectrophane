@@ -52,7 +52,6 @@ def test_raw_to_linear_rgb(mocker, mock_raw_image):
     mock_raw.postprocess.return_value = (mock_raw_image * 65535).astype(np.uint16)
 
     mocker.patch('rawpy.imread', return_value=mock_raw)
-    mocker.patch('spectrophane.training.ingest_images.get_resource_path', return_value='/fake/path/test.raw')
     result = raw_to_linear_rgb('test.raw')
 
     mock_raw.postprocess.assert_called_once_with(
@@ -65,13 +64,11 @@ def test_raw_to_linear_rgb(mocker, mock_raw_image):
 
 # Test image_to_linrgb
 def test_rgb_image_to_linrgb(mocker, mock_rgb_image):
-    mock_get_resource_path = mocker.patch('spectrophane.training.ingest_images.get_resource_path', return_value='/fake/path/test.raw')
     mock_image_open = mocker.patch('PIL.Image.open', return_value=mock_rgb_image)
     mock_decode_rgb_img = mocker.patch('spectrophane.training.ingest_images.decode_rgb', return_value=mock_rgb_image)
     
     result = rgb_image_to_linrgb("rest.raw")
     
-    mock_get_resource_path.assert_called_once_with("material_data/images/rest.raw")
     mock_image_open.assert_called_once()
     mock_decode_rgb_img.assert_called_once()
     encoded_array = mock_decode_rgb_img.call_args[0][0]
