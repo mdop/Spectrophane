@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, Sequence
+from typing import Tuple, Optional, Sequence, Self
 import numpy as np
 from numbers import Number
 from dataclasses import dataclass, field
@@ -95,20 +95,43 @@ class SpectrumBlock:
             start_spectrum_index = next_block_index
         return SpectrumBlock(start=axis.start, step=axis.step, values=harmonized_values)
 
+@dataclass
+class NameSpectraBase:
+    names: Tuple[str, ...]
+    spectra: SpectrumBlock
+
+    def take_indexes(self, indexes: int | Sequence[int]) -> Self:
+        if isinstance(indexes, int):
+            indexes = (indexes,)
+
+        new_names = tuple(self.names[i] for i in indexes)
+        new_spectra = self.spectra[indexes]  # or spectra[indexes]
+
+        return type(self)(
+            names=new_names,
+            spectra=new_spectra,
+        )
+
+    def take_names(self, names: str | Sequence[str]) -> Self:
+        if isinstance(names, str):
+            names = (names,)
+
+        index_map = {name: i for i, name in enumerate(self.names)}
+        indexes = [index_map[name] for name in names]
+
+        return self.take_indexes(indexes)
 
 @dataclass
-class LightSources:
+class LightSources(NameSpectraBase):
     """Dataclass representing light sources with their names and spectra.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
-    names: Tuple[str]
-    spectra: SpectrumBlock
+    pass
 
 @dataclass
-class Observers:
+class Observers(NameSpectraBase):
     """Dataclass representing observers with their names and spectra.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
-    names: Tuple[str]
-    spectra: SpectrumBlock
+    pass
 
 @dataclass
 class StackData:
