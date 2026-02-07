@@ -156,7 +156,7 @@ def mock_white_top_black_bottom(mock_black_top_white_bottom, xp):
     return data
 
 def test_KM_transmission(KM_instance: KubelkaMunk, mock_stack, mock_material_params, xp):
-    result = KM_instance.transmission(mock_stack, mock_material_params)
+    result = KM_instance.transmission_single(mock_stack, mock_material_params)
     assert result.shape == (3,)
     assert xp.all(xp.isfinite(result))
 
@@ -164,15 +164,15 @@ def test_KM_transmission_order(KM_instance: KubelkaMunk, mock_black_top_white_bo
     stack_bt, param_bt = mock_black_top_white_bottom
     stack_wt, param_wt = mock_white_top_black_bottom
 
-    result_bt = KM_instance.transmission(stack_bt, param_bt)
-    result_wt = KM_instance.transmission(stack_wt, param_wt)
+    result_bt = KM_instance.transmission_single(stack_bt, param_bt)
+    result_wt = KM_instance.transmission_single(stack_wt, param_wt)
     assert xp.all(xp.isfinite(result_bt))
     assert xp.all(result_bt > 1e-5)
     assert xp.all(result_bt <= 1)
     assert xp.allclose(result_bt, result_wt)
 
 def test_KM_reflection(KM_instance: KubelkaMunk, mock_stack, mock_material_params, xp):
-    result = KM_instance.reflection(mock_stack, mock_material_params, xp.array([1.0, 0.5, 0.0]))
+    result = KM_instance.reflection_single(mock_stack, mock_material_params, xp.array([1.0, 0.5, 0.0]))
     assert result.shape == (3,)
     assert xp.all(xp.isfinite(result))
 
@@ -180,8 +180,8 @@ def test_KM_reflection_order(KM_instance: KubelkaMunk, mock_black_top_white_bott
     stack_bt, param_bt = mock_black_top_white_bottom
     stack_wt, param_wt = mock_white_top_black_bottom
 
-    result_bt = KM_instance.reflection(stack_bt, param_bt, xp.array([1]*len(param_bt.absorption_coeff[0])))
-    result_wt = KM_instance.reflection(stack_wt, param_wt, xp.array([1]*len(param_bt.absorption_coeff[0])))
+    result_bt = KM_instance.reflection_single(stack_bt, param_bt, xp.array([1]*len(param_bt.absorption_coeff[0])))
+    result_wt = KM_instance.reflection_single(stack_wt, param_wt, xp.array([1]*len(param_bt.absorption_coeff[0])))
     assert xp.all(xp.isfinite(result_bt))
     assert xp.all(result_bt > 1e-5)
     assert xp.all(result_bt < 1)

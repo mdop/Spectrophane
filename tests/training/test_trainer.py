@@ -20,11 +20,11 @@ class MockTheory(BaseTheory):
         self.xp = self.bn.xp
 
     
-    def transmission(self, stacks, parameter):
+    def transmission_single(self, stacks, parameter):
         #return jnp.ones((10,))
         return parameter.absorption_coeff[0]+parameter.scattering_coeff[0]
 
-    def reflection(self, stacks, parameter, background):
+    def reflection_single(self, stacks, parameter, background):
         return self.xp.ones((10,))
 
 class MockRefImageData(TrainingRefImageData):

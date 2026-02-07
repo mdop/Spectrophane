@@ -58,9 +58,10 @@ class Evaluator:
             calc_stacks = jaxify(calc_stacks)
 
         if self._view_geometry == "transmission":
-            calc_spectrum = self._calc_backend.vmap(self._model.transmission, in_axes=(0, None))(calc_stacks, self._parameters)
+            calc_spectrum = self._model.transmission_batch(calc_stacks, self._parameters)
         else:
-            calc_spectrum = self._calc_backend.vmap(self._model.reflection, in_axes=(0, None, None))(calc_stacks, self._parameters, self._backing)
+            calc_backings = self._backing[calc_indexes]
+            calc_spectrum = self._model.reflection_batch(calc_stacks, self._parameters, calc_backings)
         calc_xyz = self._calc_backend.vmap(spectrum_to_xyz, in_axes=[0,None,None, None, None])(calc_spectrum, self._illuminator, self._observer, self._step_wavelength, self._spectrum_xyz_renormalization_factor)
         
         if self._calc_backend_str == "jax":

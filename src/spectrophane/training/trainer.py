@@ -47,14 +47,14 @@ def initialize_parameter(model: BaseTheory, material_count, wavelength_axis: Wav
 def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, ref_spectrum_data: TrainingRefSpectraData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
     """Calculates loss for spectrum and image data."""
     #calculate predicted spectra batched and take mean difference of Reflection/Transmission as loss
-    pred_spectrum_transmission = jax.vmap(model.transmission, in_axes=(0, None))(ref_spectrum_data.transmission_stacks, parameter)
-    pred_spectrum_reflection = jax.vmap(model.reflection, in_axes=(0, None, 0))(ref_spectrum_data.reflection_stacks, parameter, ref_spectrum_data.reflection_background)
+    pred_spectrum_transmission = model.transmission_batch(ref_spectrum_data.transmission_stacks, parameter)
+    pred_spectrum_reflection = model.reflection_batch(ref_spectrum_data.reflection_stacks, parameter, ref_spectrum_data.reflection_background)
     spectrum_transmission_loss = jnp.mean(jnp.abs(pred_spectrum_transmission-ref_spectrum_data.transmission_spectra), axis=0)
     spectrum_reflection_loss = jnp.mean(jnp.abs(pred_spectrum_reflection-ref_spectrum_data.reflection_spectra), axis=0)
     spectrum_loss = jnp.mean(jnp.stack((spectrum_reflection_loss, spectrum_transmission_loss), axis=0), axis = None)
 
     #calculate predicted xyz. Use CIE 1931 observer to adhere to sRGB definition, for human perception later CIE 1964 is better suited
-    pred_transmission_image_spectrum = jax.vmap(model.transmission, in_axes=(0, None))(ref_image_data.transmission_stacks, parameter)
+    pred_transmission_image_spectrum = model.transmission_batch(ref_image_data.transmission_stacks, parameter)
     light_spectra = light_sources[ref_image_data.transmission_light_source_indexes]
     pred_transmission_image_xyz = jax.vmap(spectrum_to_xyz, in_axes=[0,0,None, None])(pred_transmission_image_spectrum, light_spectra, CIE1931, parameter.absorption_coeff.shape[1])
     image_loss = jnp.mean(jnp.abs(pred_transmission_image_xyz - ref_image_data.transmission_xyz),None)

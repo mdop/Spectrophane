@@ -16,7 +16,7 @@ def config():
     res["illuminator"] = np.ones(10)
     res["observer"] = np.ones((3,10))
     res["step_wavelength"] = 1
-    res["backing"] = np.ones(10)
+    res["backing"] = np.ones((3,10))
     res["calc_backend"] = "jax"
     res["edge_stacks"] = StackData(material_nums=np.array([[0,1],[1,0],[2,1]]), thicknesses=np.array([[0.1,0.1],[0.2,0.1],[0.3,0.2]]))
     return res
@@ -29,7 +29,7 @@ def test_evaluator_initialization(config, mocker):
     assert evaluator._calc_backend_str == config["calc_backend"]
     assert isinstance(evaluator._model, THEORY_REGISTRY[config["theory"]])
     assert evaluator._view_geometry == config["view_geometry"]
-    assert evaluator._backing.shape[0] == 10
+    assert evaluator._backing.shape == (3, 10)
 
 def test_set_renormalizer(config):
     calibration_stack = config["edge_stacks"]
@@ -53,21 +53,21 @@ def test_evaluate_renormalize_caching(config):
     eval_stack2 = StackData(material_nums=np.array([[1,0],[0,1],[1,2]]), thicknesses=np.array([[0.2,0.1],[0.2,0.2],[0.3,0.1]]))
 
     #show change in return after calibration
-    stack_reflection_result = np.random.rand(10,) * 0.9
-    evaluator._model.reflection = lambda stacks, params, backing: stack_reflection_result
+    stack_reflection_result = np.random.rand(3,10) * 0.9
+    evaluator._model.reflection_batch = lambda stacks, params, backing: stack_reflection_result
     stack1_initial_xyz = evaluator.evaluate(eval_stack1)
-    evaluator._model.reflection = lambda stacks, params, backing: stack_reflection_result*0.9 #change return value to proof values were taken from cache
+    evaluator._model.reflection_batch = lambda stacks, params, backing: np.ones_like(backing) #change return value to proof values were taken from cache
     stack1_initial_xyz_cached = evaluator.evaluate(eval_stack1)
     assert np.all(stack1_initial_xyz == stack1_initial_xyz_cached)
 
-    evaluator._model.reflection = lambda stacks, params, backing: np.array([0.9]*10)
+    evaluator._model.reflection_batch = lambda stacks, params, backing: np.array([[0.9]*10]*len(calibration_stack.material_nums))
     evaluator.set_renormalizer(calibration_stack)
-    evaluator._model.reflection = lambda stacks, params, backing: stack_reflection_result
+    evaluator._model.reflection_batch = lambda stacks, params, backing: np.ones_like(backing) #value cached
     stack1_xyz = evaluator.evaluate(eval_stack1)
     assert np.all(stack1_xyz > stack1_initial_xyz)
 
     stack2_xyz = evaluator.evaluate(eval_stack2)
-    evaluator._model.reflection = lambda stacks, params, backing: stack_reflection_result*0.9
+    evaluator._model.reflection_batch = lambda stacks, params, backing: np.ones_like(backing)*0.9
     stack2_xyz_cached = evaluator.evaluate(eval_stack2)
     assert np.all(stack2_xyz == stack2_xyz_cached)
 
