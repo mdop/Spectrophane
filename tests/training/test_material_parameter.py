@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from dataclasses import dataclass, fields
 
-from spectrophane.training.material_parameter import SpectrumPlotLineData, print_color_comparison, color_str, serialize_parameter, extract_spectral_plot_series, plot_parameter, deserialize_parameter
+from spectrophane.training.material_parameter import SpectrumPlotLineData, terminal_color_comparison_string, color_str, serialize_parameter, extract_spectral_plot_series, plot_parameter, deserialize_parameter, plot_loss_series
 from spectrophane.core.dataclasses import MaterialParams
 
 
@@ -49,7 +49,7 @@ def test_terminal_width_wrapping(monkeypatch: MonkeyPatch, capfd: CaptureFixture
     actual_colors =     jnp.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
 
     # Call the function
-    print_color_comparison(calculated_colors, actual_colors)
+    terminal_color_comparison_string(calculated_colors, actual_colors)
 
     # Capture output
     captured = capfd.readouterr()
@@ -66,7 +66,7 @@ def test_no_wrapping_needed(monkeypatch: MonkeyPatch, capfd: CaptureFixture[str]
     actual_colors = jnp.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
     # Call the function
-    print_color_comparison(calculated_colors, actual_colors)
+    terminal_color_comparison_string(calculated_colors, actual_colors)
 
     # Capture output
     captured = capfd.readouterr()
@@ -130,6 +130,29 @@ def test_plot_parameter():
     assert fig.data[0].y is not None
     assert fig.data[0].name == "Material A"
     assert fig.data[1].name == "Material B"
+
+
+def test_plot_loss_series_valid_input():
+    # Test with a valid list of losses
+    losses = [0.5, 0.4, 0.3, 0.2, 0.1]
+    fig = plot_loss_series(losses)
+    
+    assert fig is not None
+    assert len(fig.data) == 1
+    assert fig.data[0].x == tuple(range(len(losses)))
+    assert fig.data[0].y == tuple(losses)
+    assert fig.layout.title.text #not empty
+
+def test_plot_loss_series_empty_input():
+    # Test with an empty list
+    losses = []
+    fig = plot_loss_series(losses)
+    
+    assert fig is not None
+    assert len(fig.data) == 1
+    assert fig.data[0].x == ()
+    assert fig.data[0].y == ()
+    assert fig.layout.title.text #not empty
 
 
 def test_serialize_parameter(mock_material_param, mock_material_metadata):

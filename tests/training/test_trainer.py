@@ -120,8 +120,8 @@ def test_train_parameter_parameters_update(mocker, mock_model, mock_ref_image_da
 
     mock_grad = mocker.patch("jax.value_and_grad", side_effect=lambda fn: fake_grad_fn(fn))
 
-    parameter1, _  = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 1)
-    parameter10, _ = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 10)
+    parameter1, _, _  = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 1)
+    parameter10, _, _ = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 10)
 
     # Verify that the parameters are not the same as the initial ones
     assert not jnp.allclose(start_params.absorption_coeff, parameter1.absorption_coeff)

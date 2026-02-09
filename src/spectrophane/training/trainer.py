@@ -43,6 +43,11 @@ def initialize_parameter(model: BaseTheory, material_count, wavelength_axis: Wav
                               absorption_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64),
                               scattering_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64))
 
+def calibration_images_to_xyz(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
+    pred_transmission_image_spectrum = model.transmission_batch(ref_image_data.transmission_stacks, parameter)
+    light_spectra = light_sources[ref_image_data.transmission_light_source_indexes]
+    calc_transmission_image_xyz = jax.vmap(spectrum_to_xyz, in_axes=[0,0,None, None])(pred_transmission_image_spectrum, light_spectra, CIE1931, parameter.absorption_coeff.shape[1])
+    return calc_transmission_image_xyz
 
 def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, ref_spectrum_data: TrainingRefSpectraData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
     """Calculates loss for spectrum and image data."""
@@ -54,9 +59,7 @@ def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: Trai
     spectrum_loss = jnp.mean(jnp.stack((spectrum_reflection_loss, spectrum_transmission_loss), axis=0), axis = None)
 
     #calculate predicted xyz. Use CIE 1931 observer to adhere to sRGB definition, for human perception later CIE 1964 is better suited
-    pred_transmission_image_spectrum = model.transmission_batch(ref_image_data.transmission_stacks, parameter)
-    light_spectra = light_sources[ref_image_data.transmission_light_source_indexes]
-    pred_transmission_image_xyz = jax.vmap(spectrum_to_xyz, in_axes=[0,0,None, None])(pred_transmission_image_spectrum, light_spectra, CIE1931, parameter.absorption_coeff.shape[1])
+    pred_transmission_image_xyz = calibration_images_to_xyz(model, parameter, ref_image_data, light_sources, CIE1931)
     image_loss = jnp.mean(jnp.abs(pred_transmission_image_xyz - ref_image_data.transmission_xyz),None)
 
     #combine losses to total loss
@@ -68,7 +71,7 @@ def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: Trai
 def train_parameter(model_name: str, material_count: int, 
                     wavelength_axis: WavelengthAxis, image_ref: TrainingRefImageData, spectra_ref: TrainingRefSpectraData, 
                     light_sources: LightSources, single_observer: Observers, 
-                    num_steps=10, lr=1e-1):
+                    num_steps=10, lr=1e-1, get_final_image_colors: bool = False):
     """Trains material parameter with a given physics model by gradient descent optimization. Input data may be deduced from a calibration config file. 
     single_observer should be a filtered down list of available observers, the first entry will be used."""
     
@@ -92,5 +95,9 @@ def train_parameter(model_name: str, material_count: int,
     for step in range(num_steps):
         parameter, opt_state, loss = train_step(parameter, opt_state)
         losses[step] = loss
+    
+    calc_colors = None
+    if get_final_image_colors:
+        calc_colors = calibration_images_to_xyz(model, parameter, image_ref, light_sources.spectra, single_observer.spectra)
 
-    return parameter, losses
+    return parameter, losses, calc_colors

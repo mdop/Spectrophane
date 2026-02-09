@@ -237,3 +237,16 @@ class Prism(SolidPrimitive):
     base_xy: np.ndarray  # shape (N, 2), dtype=float64
     z0: float
     z1: float
+
+
+############################## Pipeline dataclasses ##############################
+
+@dataclass(frozen=True)
+class TrainingConfig:
+    model: str = "kubelka_munk"
+    observer: str = "CIE1931"
+    steps: int = 1000
+    lr: float = 1e-1
+    parameter_plot_filter: Sequence[str] | None = None
+    parameter_plot_rows: int = 1
+    get_terminal_color_comparison: bool = True

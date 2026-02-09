@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dataclasses
 from numbers import Number
-from typing import Optional
+from typing import Sequence
 from math import ceil
 
 from spectrophane.core.dataclasses import MaterialParams, WavelengthAxis
@@ -29,7 +29,7 @@ def color_str(rgb: jnp.ndarray):
     a= [0xFF, 0x0F, 0x00]
     return f"\033[48;2;{int(rgb[0]*255)};{int(rgb[1]*255)};{int(rgb[2]*255)}m \033[0m"
 
-def print_color_comparison(calculated_colors: jnp.ndarray, actual_colors: jnp.ndarray):
+def terminal_color_comparison_string(calculated_colors: jnp.ndarray | np.ndarray, actual_colors: jnp.ndarray | np.ndarray):
     """Shows comparison of learned and measured colors"""
     learn_start = "learned: "
     learn = learn_start
@@ -96,6 +96,27 @@ def plot_parameter(series: list[SpectrumPlotLineData], *, rows: int = 0, x_label
 
     return fig
 
+def plot_loss_series(losses: Sequence[float]):
+    """Takes loss series of training and returns a scatter plot of training step vs loss."""
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+                             x=list(range(len(losses))),
+                             y=losses,
+                             mode='lines+markers',
+                             name='Loss',
+                             line=dict(color='blue'),
+                             marker=dict(size=6)
+                            ))
+
+    fig.update_layout(
+                      title='Training Loss Series',
+                      xaxis_title='Epoch',
+                      yaxis_title='Loss',
+                      showlegend=True
+                     )
+
+    return fig
 
 def serialize_parameter(material_data: list, parameter: MaterialParams) -> dict:
     """Serializes trained parameter set to json and saves to file. Filepath is relative to [resources]/material_data/"""
