@@ -202,8 +202,7 @@ class MaterialParams:
 
 @dataclass
 class TopologyBlock:
-    allowed_materials: np.ndarray #order may be used in unordered stack construction
-    max_layers_per_allowed_material: np.ndarray
+    max_layers_per_material: np.ndarray
     thicknesses: np.ndarray
 
 @dataclass

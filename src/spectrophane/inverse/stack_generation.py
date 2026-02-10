@@ -35,13 +35,14 @@ class StackGenerator:
         for block in range(len(self._rules.blocks)):
             counts, thickness = self._complete_unordered_block(block)
             local = self._rules.blocks[block]
+            allowed_material_indexes = np.nonzero(local.max_layers_per_material > 0)[0] #mapping allowed materials (filtered) back to material index
 
-            Lb = len(local.allowed_materials)
+            Lb = np.sum(local.max_layers_per_material > 0)
             total_layers += Lb
 
             block_data.append({
-                "block_comb": counts,                     # (C_b, M_b)
-                "allowed": local.allowed_materials,   # (M_b,)
+                "block_comb": counts,                       # (C_b, M_b)
+                "allowed": allowed_material_indexes,        # (M_b,)
                 "thickness": thickness,
                 "layers": Lb
             })
@@ -61,11 +62,12 @@ class StackGenerator:
 
 
     def _complete_unordered_block(self, block: int):
-        """Creates all allowed combinations of layer counts for the allowed materials of the specified stack block."""
+        """Creates all allowed combinations of layer counts for the number of allowed materials (>0 max layers) of the specified stack block. 
+        Return an array of shape (combinations, allowed_materials). Careful: the allowed_materials index is filtered!"""
         local = self._rules.blocks[block]
 
-        allowed = local.allowed_materials
-        max_layers = local.max_layers_per_allowed_material
+        max_layers = local.max_layers_per_material
+        allowed_layers = max_layers[max_layers > 0]
         thicknesses = local.thicknesses
 
         thickness = thicknesses[0]
@@ -73,7 +75,7 @@ class StackGenerator:
 
         # total layers in this block
         L = len(thicknesses)
-        M = len(allowed)
+        M = len(allowed_layers)
 
         results = []
         current = np.zeros(M, dtype=int)
@@ -81,7 +83,7 @@ class StackGenerator:
         # precompute suffix sums for pruning
         max_suffix = np.zeros(M + 1, dtype=int)
         for i in range(M - 1, -1, -1):
-            max_suffix[i] = max_suffix[i + 1] + max_layers[i]
+            max_suffix[i] = max_suffix[i + 1] + allowed_layers[i]
 
         def dfs(i, remaining):
             # prune if impossible to fill remaining layers
@@ -93,7 +95,7 @@ class StackGenerator:
                     results.append(current.copy())
                 return
 
-            max_assign = min(max_layers[i], remaining)
+            max_assign = min(allowed_layers[i], remaining)
             for n in range(max_assign + 1):
                 current[i] = n
                 dfs(i + 1, remaining - n)

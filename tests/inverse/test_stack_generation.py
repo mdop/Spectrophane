@@ -6,17 +6,17 @@ from spectrophane.inverse.stack_generation import StackGenerator, StackTopologyR
 
 @pytest.fixture
 def two_layer_block():
-    block = TopologyBlock(allowed_materials=np.array([0,1]), max_layers_per_allowed_material=np.array([2,2]), thicknesses=np.array([0.1,0.1]))
+    block = TopologyBlock(max_layers_per_material=np.array([2,2,0,0]), thicknesses=np.array([0.1,0.1]))
     return block #3 combinations
 
 @pytest.fixture
 def three_layer_restricted_block():
-    block = TopologyBlock(allowed_materials=np.array([0,1,2]), max_layers_per_allowed_material=np.array([3,1,2]), thicknesses=np.array([0.1,0.1,0.1]))
+    block = TopologyBlock(max_layers_per_material=np.array([3,1,2,0]), thicknesses=np.array([0.1,0.1,0.1]))
     return block #6 combinations
 
 @pytest.fixture
 def four_layer_block():
-    block = TopologyBlock(allowed_materials=np.array([0,1,3]), max_layers_per_allowed_material=np.array([4,4,4]), thicknesses=np.array([0.2,0.2,0.2,0.2]))
+    block = TopologyBlock(max_layers_per_material=np.array([4,4,0,4]), thicknesses=np.array([0.2,0.2,0.2,0.2]))
     return block #comb(materials+layers-1, materials-1)=15 combinations
 
 @pytest.fixture
