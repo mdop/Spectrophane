@@ -111,6 +111,6 @@ class StackGenerator:
         thicknesses = []
         for block in self._rules.blocks:
             thicknesses += block.thicknesses.tolist()
-        material_matrix = np.array([[mat.tolist()]*len(thicknesses) for mat in self._rules.material_indexes])
-        thickness_matrix = np.array([thicknesses for mat in self._rules.material_indexes])
+        material_matrix = np.array([[mat]*len(thicknesses) for mat in range(self._rules.material_count)])
+        thickness_matrix = np.array([thicknesses for mat in range(self._rules.material_count)])
         return material_matrix, thickness_matrix

@@ -21,7 +21,7 @@ def four_layer_block():
 
 @pytest.fixture
 def stack_rules(two_layer_block, three_layer_restricted_block, four_layer_block):
-    return StackTopologyRules(material_indexes=np.array([0,1,2,3]), blocks=[two_layer_block, three_layer_restricted_block, four_layer_block], ordered=False) #270 total combinations
+    return StackTopologyRules(blocks=[two_layer_block, three_layer_restricted_block, four_layer_block], ordered=False) #270 total combinations
 
 @pytest.fixture
 def stack_generator(stack_rules):

@@ -207,9 +207,17 @@ class TopologyBlock:
 
 @dataclass
 class StackTopologyRules:
-    material_indexes: np.ndarray
     blocks: list[TopologyBlock]
     ordered: bool #Describes if order of layers matters. Decides max_layers for StackData shapes
+
+    @property
+    def material_count(self) -> int:
+        """Returns total number of materials. Raises ValueError if inconsistent results are found"""
+        count = len(self.blocks[0].max_layers_per_material)
+        for block in self.blocks:
+            if len(block.max_layers_per_material) != count:
+                raise ValueError(f"Inconsistent stack topology found! First block has {count} materials, but {len(block.max_layers_per_material)} were also found!")
+        return count
 
 @dataclass
 class VoxelGeometry:
