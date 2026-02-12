@@ -5,7 +5,7 @@ import jax
 from jax import jit
 import optax
 
-from spectrophane.core.dataclasses import MaterialParams, WavelengthAxis, LightSources, Observers
+from spectrophane.core.dataclasses import MaterialParams, WavelengthAxis, LightSources, Observers, SpectrumBlock
 from spectrophane.color.conversions import spectrum_to_xyz
 from spectrophane.core.jax_utils import jaxify
 from spectrophane.io.resources import get_json_resource
@@ -78,11 +78,13 @@ def train_parameter(model_name: str, material_count: int,
     losses = [0.0]*num_steps
     model = THEORY_REGISTRY[model_name]("jax")
     parameter = initialize_parameter(model, material_count, wavelength_axis)
+    light_sources_harmonized = SpectrumBlock.merge_resample_spectra(light_sources.spectra, wavelength_axis)
+    single_observer_harmonized = SpectrumBlock.merge_resample_spectra(single_observer.spectra, wavelength_axis)
 
     optimizer = optax.adam(lr)
     opt_state = optimizer.init(parameter)
 
-    loss_fn = lambda p: compute_loss(model, p, image_ref, spectra_ref, light_sources.spectra.values, single_observer.spectra.values[0])
+    loss_fn = lambda p: compute_loss(model, p, image_ref, spectra_ref, light_sources_harmonized.values[0], single_observer_harmonized.values[0])
     grad_fn = jax.value_and_grad(loss_fn)
 
     @jit

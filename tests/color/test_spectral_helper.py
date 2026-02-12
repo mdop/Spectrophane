@@ -103,18 +103,18 @@ def test_parse_light_sources(mock_CIE_light_sources):
     assert isinstance(result, LightSources)
     assert len(result.names) == 4
     assert isinstance(result.names, tuple)
-    assert isinstance(result.spectra, SpectrumBlock)
-    assert result.spectra.values.shape == (4,100)
-    assert np.all(result.spectra.values[2,:] == 0.5)
-    assert np.all(result.spectra.values[3,:] == 1)
+    assert isinstance(result.spectra[2], SpectrumBlock)
+    assert result.spectra[0].values.shape == (1,100)
+    assert np.all(result.spectra[2].values[0,:] == 0.5)
+    assert np.all(result.spectra[3].values[0,:] == 1)
 
 @pytest.fixture
 def mock_CIE_observer(mocker):
-    block = SpectrumBlock(start=350,step=2,values=np.array([[[[1.0]*100]*3]]))
+    block = SpectrumBlock(start=350,step=2,values=np.array([[[1.0]*100]*3]))
     output = (("C1", "C2"), (block,block))
-    return mocker.patch("spectrophane.io.misc_data_import._import_CIE_observers", return_value = output)
+    return mocker.patch("spectrophane.color.spectral_helper._import_CIE_observers", return_value = output)
 
-def test_parse_observer():
+def test_parse_observer(mock_CIE_observer):
     data = {
         "observer": [
             {
@@ -135,7 +135,7 @@ def test_parse_observer():
     assert isinstance(result, Observers)
     assert len(result.names) == 4
     assert isinstance(result.names, tuple)
-    assert isinstance(result.spectra, SpectrumBlock)
-    assert result.spectra.values.shape == (4,3,50)
-    assert np.all(result.spectra.values[2,:] == 0.5)
-    assert np.all(result.spectra.values[3,:] == 1)
+    assert isinstance(result.spectra[2], SpectrumBlock)
+    assert result.spectra[2].values.shape == (1,3,100)
+    assert np.all(result.spectra[2].values[0,:] == 0.5)
+    assert np.all(result.spectra[3].values[0,:] == 1)

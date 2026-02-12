@@ -53,7 +53,7 @@ def parse_light_sources(config_data: dict, wavelength_axis: WavelengthAxis) -> L
             vals = np.array(source["value"])
             vals = vals.reshape(1, vals.shape[0])
             intensities += (SpectrumBlock(start=source["wl_start"], step=source["wl_step"], values=vals),)
-    return LightSources(ids, SpectrumBlock.merge_resample_spectra(intensities, axis=wavelength_axis))
+    return LightSources(ids, intensities)
 
 
 def parse_observers(config_data: dict, wavelength_axis: WavelengthAxis) -> Observers:
@@ -67,4 +67,4 @@ def parse_observers(config_data: dict, wavelength_axis: WavelengthAxis) -> Obser
             ids += (observer["id"],)
             observer_data += (SpectrumBlock(start=observer["wl_start"], step=observer["wl_step"], values=sensitivity),)
     
-    return Observers(ids, SpectrumBlock.merge_resample_spectra(observer_data, wavelength_axis))
+    return Observers(ids, observer_data)

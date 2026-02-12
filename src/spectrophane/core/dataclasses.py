@@ -98,14 +98,14 @@ class SpectrumBlock:
 @dataclass
 class NameSpectraBase:
     names: Tuple[str, ...]
-    spectra: SpectrumBlock
+    spectra: Sequence[SpectrumBlock]
 
     def take_indexes(self, indexes: int | Sequence[int]) -> Self:
         if isinstance(indexes, int):
             indexes = (indexes,)
 
         new_names = tuple(self.names[i] for i in indexes)
-        new_spectra = self.spectra[indexes]  # or spectra[indexes]
+        new_spectra = tuple(self.spectra[i] for i in indexes)
 
         return type(self)(
             names=new_names,
@@ -218,6 +218,11 @@ class StackTopologyRules:
             if len(block.max_layers_per_material) != count:
                 raise ValueError(f"Inconsistent stack topology found! First block has {count} materials, but {len(block.max_layers_per_material)} were also found!")
         return count
+    
+    @property
+    def layer_thicknesses(self) -> np.ndarray:
+        """Returns a combined single array of thicknesses from all blocks"""
+        return np.concatenate([block.thicknesses for block in self.blocks])
 
 @dataclass
 class VoxelGeometry:
@@ -257,3 +262,27 @@ class TrainingConfig:
     parameter_plot_filter: Sequence[str] | None = None
     parameter_plot_rows: int = 1
     get_terminal_color_comparison: bool = True
+
+
+@dataclass(frozen=True)
+class EvaluatorSpec:
+    theory: str = "kubelka_munk"                # implemented: "kubelka_munk"
+    observer: str = "CIE1931"                   # name in the Observers object names list (presumably from config)
+    illuminator: str = "D65"                    # name in the LightSources object names list (presumably from config)
+    calc_backend: str = "jax"                   # implemented: "jax", "numpy"
+    cache_backend: str = "dict"                 # implemented: "dict"
+    view_geometry: str = "transmission"         # "transmission" or "reflection"
+    background: SpectrumBlock | float = 1.0     # background reflectivity. Only relevant for reflection view geometry, values in range [0.0,1.0]. Single value is interpreted as flat spectrum
+    edge_stacks: StackCandidates | None = None  # To expand color gamut extreme stack combinations may be used to renormalize color output. Use if original light source is not visible to viewer (typically in transmission case)
+
+@dataclass(frozen=True)
+class InverterSpec:
+    algorithm: str = "lut"                              # implemented: "lut"
+    lut_compression_factor: Optional[int] = None        # relevant for LUT
+
+@dataclass(frozen=True)
+class LithophaneConfig:
+    material_names: Sequence[str]
+    builder_algorithm: str = "voxel"                    # implemented: "voxel"
+    export_backend_format: str = "stl"               # implemented: "STL"
+    export_stl_type: str = "binary"                     # implemented: "binary"/"ASCII"

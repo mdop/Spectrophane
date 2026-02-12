@@ -5,7 +5,7 @@ import jax
 
 from spectrophane.training.trainer import compute_loss, train_parameter, initialize_parameter
 from spectrophane.physics.mix_theories import BaseTheory
-from spectrophane.core.dataclasses import TrainingRefImageData, TrainingRefSpectraData, StackData, MaterialParams, SpectrumBlock, WavelengthAxis
+from spectrophane.core.dataclasses import TrainingRefImageData, TrainingRefSpectraData, StackData, MaterialParams, SpectrumBlock, WavelengthAxis, LightSources, Observers
 from spectrophane.core.numeric_backend import Backend, NumPyBackend, JAXBackend
 
 from spectrophane.core.jax_utils import register_with_jax, jaxify
@@ -41,14 +41,6 @@ class MockRefSpectraData(TrainingRefSpectraData):
         self.reflection_spectra    = jnp.ones((2, 10))
         self.reflection_background = jnp.ones((2, 10))
 
-class MockLightSources:
-    def __init__(self):
-        self.spectra = SpectrumBlock(start=400, step=10, values=jnp.ones((1, 10)))
-
-class MockCIE1931:
-    def __init__(self):
-        self.spectra = SpectrumBlock(start=400, step=10, values=jnp.ones((1, 10)))
-
 # Test fixtures
 @pytest.fixture
 def mock_model():
@@ -64,18 +56,18 @@ def mock_ref_spectrum_data():
 
 @pytest.fixture
 def mock_light_sources():
-    return MockLightSources()
+    return LightSources(["a"],[SpectrumBlock(start=400, step=10, values=jnp.ones((1, 10)))])
 
 @pytest.fixture
-def mock_cie1931():
-    return MockCIE1931()
+def mock_observer():
+    return Observers(["a"],[SpectrumBlock(start=400, step=10, values=jnp.ones((1, 3, 10)))])
 
 # Test cases
-def test_compute_loss(mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_cie1931):
+def test_compute_loss(mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer):
     axis = WavelengthAxis(start=400, step=10, length=10)
     parameter = initialize_parameter("mock_model", 2, axis)
-    light_sources = mock_light_sources.spectra.values
-    CIE1931 = mock_cie1931.spectra.values
+    light_sources = mock_light_sources.spectra[0].values[0]
+    CIE1931 = mock_observer.spectra[0].values[0]
 
     loss = compute_loss(
         model=mock_model("jax"),
@@ -89,18 +81,18 @@ def test_compute_loss(mock_model, mock_ref_image_data, mock_ref_spectrum_data, m
     assert jnp.ndim(loss) == 0, "loss must be a scalar"
     assert loss >= 0, "loss must be positive or 0"
 
-def test_train_parameter_initialization(mocker, mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_cie1931):
+def test_train_parameter_initialization(mocker, mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer):
     """Test that the training process initializes correctly."""
     mocker.patch.dict("spectrophane.physics.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
     register_with_jax()
 
-    parameter = train_parameter("mock_model", 2, WavelengthAxis(400, 40, 10), mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_cie1931)
+    parameter = train_parameter("mock_model", 2, WavelengthAxis(400, 40, 10), mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer)
     assert parameter is not None, "Training should return a parameter"
 
-def test_train_parameter_parameters_update(mocker, mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_cie1931):
+def test_train_parameter_parameters_update(mocker, mock_model, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer):
     """Test that the parameters are updated during training steps."""
-    light_sources = mock_light_sources.spectra.values
-    CIE1931 = mock_cie1931.spectra.values
+    light_sources = mock_light_sources.spectra[0].values[0]
+    observer = mock_observer.spectra[0].values[0]
 
     mocker.patch.dict("spectrophane.physics.mix_theories.THEORY_REGISTRY", {"mock_model": mock_model})
     common_axis = WavelengthAxis(start=400, step=40, length=10)
@@ -120,8 +112,8 @@ def test_train_parameter_parameters_update(mocker, mock_model, mock_ref_image_da
 
     mock_grad = mocker.patch("jax.value_and_grad", side_effect=lambda fn: fake_grad_fn(fn))
 
-    parameter1, _, _  = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 1)
-    parameter10, _, _ = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, light_sources, CIE1931, 10)
+    parameter1, _, _  = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer, 1)
+    parameter10, _, _ = train_parameter("mock_model", 2, common_axis, mock_ref_image_data, mock_ref_spectrum_data, mock_light_sources, mock_observer, 10)
 
     # Verify that the parameters are not the same as the initial ones
     assert not jnp.allclose(start_params.absorption_coeff, parameter1.absorption_coeff)
