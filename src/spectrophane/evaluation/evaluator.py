@@ -13,7 +13,7 @@ class Evaluator:
     """Wrapper class for physics model forward calculation including caching to speed up calculation and post-processing of resulting colors."""
     def __init__(self, theory: str, view_geometry: str, cache: ForwardCache, material_parameters: MaterialParams, illuminator: np.ndarray, observer: np.ndarray, step_wavelength: np.ndarray,
                  backing: np.ndarray = None, calc_backend: str= "jax", edge_stacks: StackData = None):
-        """Base settings for the evaluator. Theory is the string for which the theory is registered, e.g. kubelka_munk. illuminator and observer are assumed to be in the correct spectrum format."""
+        """Base settings for the evaluator. Theory is the string for which the theory is registered, e.g. kubelka_munk. illuminator and observer are assumed to be in the correct spectrum format (wavelengths,) and (3,wavelengths)."""
         self._cache = cache
         self._calc_backend_str = calc_backend
         self._model = physics.THEORY_REGISTRY[theory](calc_backend)

@@ -123,13 +123,13 @@ class NameSpectraBase:
 
 @dataclass
 class LightSources(NameSpectraBase):
-    """Dataclass representing light sources with their names and spectra.
+    """Dataclass representing light sources with their names and spectra. Spectra should have shape (1, wavelengths) to allow correct concatenation when harmonizing.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     pass
 
 @dataclass
 class Observers(NameSpectraBase):
-    """Dataclass representing observers with their names and spectra.
+    """Dataclass representing observers with their names and spectra. Spectra should have shape (1, wavelengths) to allow correct concatenation when harmonizing.
     Defaults to NumPy arrays. If used with jax, register as a pytree and convert arrays at the boundary."""
     pass
 
