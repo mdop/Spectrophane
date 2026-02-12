@@ -48,7 +48,7 @@ class StackGenerator:
             })
 
         total_combination_count = reduce(mul, [entry["block_comb"].shape[0] for entry in block_data], 1)
-        material_nums = np.zeros((total_combination_count, total_layers))
+        material_nums = np.zeros((total_combination_count, total_layers), dtype=np.uint8)
         thicknesses = np.zeros((total_combination_count, total_layers))
 
         for i, selection in enumerate(product(*(range(len(bd["block_comb"])) for bd in block_data))):
@@ -111,6 +111,6 @@ class StackGenerator:
         thicknesses = []
         for block in self._rules.blocks:
             thicknesses += block.thicknesses.tolist()
-        material_matrix = np.array([[mat]*len(thicknesses) for mat in range(self._rules.material_count)])
+        material_matrix = np.array([[mat]*len(thicknesses) for mat in range(self._rules.material_count)], dtype=np.uint8)
         thickness_matrix = np.array([thicknesses for mat in range(self._rules.material_count)])
         return material_matrix, thickness_matrix

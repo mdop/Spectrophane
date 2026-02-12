@@ -52,6 +52,7 @@ def test_complete_stack_generation_unordered(stack_generator: StackGenerator):
     unique_combinations = np.unique(thicknesses, axis=0)
 
     assert material_nums.shape == thicknesses.shape
+    assert material_nums.dtype == np.uint8
     assert unique_combinations.shape == thicknesses.shape
     assert material_nums.shape == (270, 8)
     assert np.allclose(np.sum(thicknesses, axis=1), np.sum(thicknesses, axis=1)[0])
@@ -61,6 +62,7 @@ def test_generate_complete_mode(stack_generator: StackGenerator):
     
     assert candidates.material_nums.shape == candidates.thicknesses.shape
     assert candidates.material_nums.shape == (270, 8)
+    assert candidates.material_nums.dtype == np.uint8
     assert np.all(candidates.material_nums >= 0)
     assert np.all(candidates.material_nums <= 3)
 
@@ -68,6 +70,7 @@ def test_generate_complete_mode(stack_generator: StackGenerator):
 def test_single_color_stacks(stack_generator: StackGenerator):
     material_nums, thicknesses = stack_generator._single_material_unordered_edge_stacks()
 
+    assert material_nums.dtype == np.uint8
     assert material_nums.shape == thicknesses.shape
     assert material_nums.shape == (4,9)
     assert np.all(material_nums[:,0] == np.array([0,1,2,3]))
