@@ -44,7 +44,7 @@ def _import_CIE_observers() -> tuple[tuple[str], tuple[SpectrumBlock]]:
         observer.append(SpectrumBlock(start=raw_min_wavelength, step=raw_step_wavelength, values=sensitivity))
     return tuple(ids), observer
 
-def parse_light_sources(config_data: dict, wavelength_axis: WavelengthAxis) -> LightSources:
+def parse_light_sources(config_data: dict) -> LightSources:
     """Returns a tuple of light source names and a numpy array containing harmonized spectra as specified in input data"""
     ids, intensities = _import_CIE_light_sources()
     if "light_sources" in config_data:
@@ -56,7 +56,7 @@ def parse_light_sources(config_data: dict, wavelength_axis: WavelengthAxis) -> L
     return LightSources(ids, intensities)
 
 
-def parse_observers(config_data: dict, wavelength_axis: WavelengthAxis) -> Observers:
+def parse_observers(config_data: dict) -> Observers:
     """Returns a tuple of observer names and a numpy array containing harmonized spectra as specified in input data"""
     ids, observer_data = _import_CIE_observers()
     if "observer" in config_data:

@@ -99,7 +99,7 @@ def test_parse_light_sources(mock_CIE_light_sources):
             }
         ]
     }
-    result = parse_light_sources(data, wavelength_axis=WavelengthAxis(start=400, step=1, length=100))
+    result = parse_light_sources(data)
     assert isinstance(result, LightSources)
     assert len(result.names) == 4
     assert isinstance(result.names, tuple)
@@ -131,7 +131,7 @@ def test_parse_observer(mock_CIE_observer):
             }
         ],
     }
-    result = parse_observers(data, WavelengthAxis(start=400, step=1, length=50))
+    result = parse_observers(data)
     assert isinstance(result, Observers)
     assert len(result.names) == 4
     assert isinstance(result.names, tuple)

@@ -90,7 +90,7 @@ def parse_image_data(input_data):
     stack_dictlist = []
     xyz_colors = []
     light_sources_indexes = []
-    light_sources_data = parse_light_sources(input_data, wavelength_axis=WavelengthAxis(500, 10, 600)) #dummy spectrum shape data to get name data for index determination
+    light_sources_data = parse_light_sources(input_data)
     
     for image_data in input_data["images"]["measurement_images"]["transmission"]:
         white_rois = image_data["white_refs"]
