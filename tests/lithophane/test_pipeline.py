@@ -84,9 +84,7 @@ def test_transform_image_integrationtest(tmp_path, mock_image, mock_inverter):
     assert len(output_files) == 2
     assert output_files[0].endswith("test_MaterialA.stl")
     assert output_files[1].endswith("test_MaterialB.stl")
-    assert expected_rgb_img.width == 30
-    assert expected_rgb_img.height == 20
-    assert score_img.width == target_width
-    assert score_img.height == target_height
+    assert expected_rgb_img.shape == (target_height,target_width,3)
+    assert score_img.shape == (target_height,target_width)
 
     

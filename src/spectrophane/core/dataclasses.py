@@ -282,6 +282,8 @@ class InverterSpec:
 
 @dataclass(frozen=True)
 class LithophaneConfig:
+    resolution: tuple[int,int]
+    pixel_xy_dimension: tuple[float,float]
     material_names: Sequence[str]
     builder_algorithm: str = "voxel"                    # implemented: "voxel"
     export_backend_format: str = "stl"               # implemented: "STL"

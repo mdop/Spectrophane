@@ -38,7 +38,7 @@ def generate_lithophane_from_image(image: ImageFile, resolution: tuple[int, int]
 
     #output image array preparation
     expected_rgb_arr = unique_stacks.rgb[image_unique_color_indexes].astype(np.uint8)
-    expected_rgb_img = Image.fromarray(expected_rgb_arr, mode="RGB")
+    #expected_rgb_img = Image.fromarray(expected_rgb_arr, mode="RGB")
     calc_score_arr = (calc_score_arr * 255).astype(np.uint8)
-    calc_score_img = Image.fromarray(calc_score_arr, mode="L")
-    return output_paths, expected_rgb_img, calc_score_img
+    #calc_score_img = Image.fromarray(calc_score_arr, mode="L")
+    return output_paths, expected_rgb_arr, calc_score_arr

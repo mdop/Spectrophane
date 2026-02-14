@@ -77,7 +77,7 @@ def test_generate_inverter(inverter):
 
 @pytest.fixture
 def lithophane_config():
-    return LithophaneConfig(["mat_a", "mat_b"], builder_algorithm="voxel", export_backend_format="stl")
+    return LithophaneConfig(resolution=(50,50),pixel_xy_dimension=(0.4,0.4),material_names=["mat_a", "mat_b"], builder_algorithm="voxel", export_backend_format="stl")
 
 def test_generate_lithophane_solid_builder(lithophane_config):
     builder = generate_lithophane_solid_builder(lithophane_config)
