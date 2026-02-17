@@ -20,6 +20,7 @@ dependencies = [
     "pillow",
     "importlib",
     "plotly",
+    "typer",
 ]
 
 [project.optional-dependencies]
@@ -33,11 +34,8 @@ dev = [
 ###rawpy
 
 # CLI entry points
-#####################TODO
-#[project.scripts]
-#spectrophane-train = "spectrophane.core.train:main"
-#spectrophane-palette = "spectrophane.lithophane_generation.palletizing.cli:main"
-#spectrophane-render = "spectrophane.lithophane_generation.render:main"
+[project.scripts]
+spectrophane = "spectrophane.application.cli.main:run"
 
 [tool.pytest.ini_options]
 addopts = [

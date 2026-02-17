@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from spectrophane.core.dataclasses import WavelengthAxis, SpectrumBlock
+from spectrophane.core.dataclasses import WavelengthAxis, SpectrumBlock, MaterialParams
 
 def test_axis_properties():
     start= 0.5
@@ -108,3 +108,19 @@ def test_spectrum_block_merge_resample_empty_spectra():
     assert block_only_axis.start == axis.start
     assert block_only_axis.start == axis.start
     assert block_only_axis.values.shape == (0, axis.length)
+
+
+def test_material_param_filtering():
+    initial = MaterialParams(wl_start=400,
+                             wl_step=5,
+                             absorption_coeff=np.random.rand(5,100),
+                             scattering_coeff=None,
+                             model_type="kubelka_munk")
+    result = initial.take(np.array([1,4]))
+
+    assert initial.wl_start == result.wl_start
+    assert initial.wl_step == result.wl_step
+    assert initial.model_type == result.model_type
+    assert initial.scattering_coeff == result.scattering_coeff
+    assert result.absorption_coeff.shape == (2,100)
+    assert np.all(initial.absorption_coeff[1] == result.absorption_coeff[0])
