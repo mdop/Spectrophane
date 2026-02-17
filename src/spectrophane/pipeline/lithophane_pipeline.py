@@ -12,8 +12,8 @@ from spectrophane.lithophane.pipeline import generate_lithophane_from_image
 from spectrophane.training.material_parameter import deserialize_parameter
 from spectrophane.pipeline.lithophane_factories import generate_evaluator, generate_inverter, generate_lithophane_solid_builder, generate_lithophane_export_backend
 
-def file_to_parameter(path: str | PosixPath, local_path: bool = True) -> tuple[list[dict], MaterialParams]:
-    """Returns a material data list as saved in the parameter file and de-serialized material parameter. For names list the name keys. """
+def file_to_parameter(path: str | PosixPath, local_path: bool = True, material_filter: list[str] | None = None) -> tuple[list[dict], MaterialParams]:
+    """Returns a material data list as saved in the parameter file and de-serialized material parameter. Materials may be filtered by material_filter, unknown entries will be silently ignored."""
     if local_path:
         total_path = get_resource_path(path)
     else:
@@ -23,7 +23,16 @@ def file_to_parameter(path: str | PosixPath, local_path: bool = True) -> tuple[l
         data = json.load(file)
     
     parameter = deserialize_parameter(data)
-    return data["materials"], parameter
+
+    #filter
+    available_names = [m["name"] for m in data["materials"]]
+    if material_filter is None:
+        indexes = np.array(range(len(available_names)))
+    else:
+        indexes = np.array([available_names.index(name) for name in material_filter if name in available_names])
+    filter_parameter = parameter.take(indexes)
+    filter_material_data = [data["materials"][i] for i in indexes]
+    return filter_material_data, filter_parameter
 
 def file_to_spectral_helper(path: str | PosixPath | None = None, local_path: bool = True) -> tuple[LightSources, Observers]:
     """Get Spectral data for light sources and observers from a configuration file (or CIE data). If CIE data only are used the path may be passed as None"""

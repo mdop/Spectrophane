@@ -11,7 +11,7 @@ from spectrophane.inverse.inverter import Inverter, LUTInverter
 from spectrophane.lithophane.solid_generation import SolidBuilder, PerVoxelBoxBuilder
 from spectrophane.lithophane.export import SolidBackend, STLTessellationBackend
 
-def generate_homogeneous_topology_block(layer_thickness: int, layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None):
+def generate_homogeneous_topology_block(layer_thickness: int, layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None) -> TopologyBlock:
     if material_layer_count_limits is None:
         material_layer_count_limits = np.array([layer_count]*material_count)
     if len(material_layer_count_limits) != material_count:

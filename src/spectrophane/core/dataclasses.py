@@ -2,6 +2,7 @@ from typing import Tuple, Optional, Sequence, Self
 import numpy as np
 from numbers import Number
 from dataclasses import dataclass, field
+import dataclasses
 
 @dataclass
 class WavelengthAxis:
@@ -191,13 +192,28 @@ class MaterialParams:
     wl_step: Number
     absorption_coeff: Optional[np.ndarray] | None = field(
         default=None,
-        metadata={"deserialize": np.array}
+        metadata={"deserialize": np.array, "filter": True}
     )
     scattering_coeff: Optional[np.ndarray] | None = field(
         default=None,
-        metadata={"deserialize": np.array}
+        metadata={"deserialize": np.array, "filter": True}
     )
-    model_type: Optional[str] = None  # "kubelka_munk", "saunderson", "monte_carlo"
+    model_type: Optional[str] = None  # "kubelka_munk" (others tbd e.g. "saunderson", "monte_carlo")
+    
+    def take(self, indexes: np.ndarray) -> "MaterialParams":
+        # Create a new instance of MaterialParams
+        new_instance = MaterialParams(
+            wl_start=self.wl_start,
+            wl_step=self.wl_step,
+            model_type=self.model_type
+        )
+
+        # Iterate over the fields and apply take only to NumPy arrays
+        for field in dataclasses.fields(self):
+            if field.metadata.get("deserialize", False) and (not getattr(self, field.name) is None):
+                setattr(new_instance, field.name, getattr(self, field.name)[indexes])
+
+        return new_instance
 
 
 @dataclass
