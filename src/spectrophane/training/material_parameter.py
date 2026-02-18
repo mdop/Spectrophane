@@ -119,7 +119,7 @@ def plot_loss_series(losses: Sequence[float]):
     return fig
 
 def serialize_parameter(material_data: list, parameter: MaterialParams) -> dict:
-    """Serializes trained parameter set to json and saves to file. Filepath is relative to [resources]/material_data/"""
+    """Serializes trained parameter set to json and saves to file."""
     param_dict = {}
     param_dict["materials"] = material_data
     param_dict["wl_start"] = parameter.wl_start

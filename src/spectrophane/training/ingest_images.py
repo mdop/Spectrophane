@@ -86,7 +86,7 @@ def process_image_to_xyz(linrgb_image: np.ndarray, white_rois: Sequence[Sequence
     return color_xyz_corr
 
 def parse_image_data(input_data):
-    """Takes json material characterization file data and returns stack data arrays and a corresponding color array"""
+    """Takes json material characterization file data and returns stack data arrays and a corresponding color array. Image files are searched for relative to [projectdataroot]/training_data/images"""
     stack_dictlist = []
     xyz_colors = []
     light_sources_indexes = []
@@ -98,7 +98,7 @@ def parse_image_data(input_data):
         color_rois = [area["roi"]               for area in image_data["measurement_areas"]]
         image_stack_dictlist = [area["stack"]   for area in image_data["measurement_areas"]]
         if image_data.get("internal_path", True):
-            filepath = get_resource_path("material_data/images/" + image_data["filename"])
+            filepath = get_resource_path("training_data/images/" + image_data["filename"])
         else:
             filepath = image_data["filename"]
         image_array = import_image(filepath)
