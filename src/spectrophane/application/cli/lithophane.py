@@ -13,7 +13,7 @@ from spectrophane.pipeline.lithophane_pipeline import (
 )
 
 from spectrophane.pipeline.lithophane_factories import (
-    generate_stack_rules_single_homogeneous_block,
+    generate_stack_rules_bottom_color_top_blocks,
 )
 
 from spectrophane.core.dataclasses import (
@@ -37,7 +37,11 @@ def lithophane_command(
 
     # Stack topology
     layer_count: int = typer.Option(..., help="Number of layers"),
-    layer_thickness: int = typer.Option(..., help="Thickness per layer (in mm)"),
+    layer_thickness: float = typer.Option(..., help="Thickness per layer (in mm)"),
+    bottom_thickness: float = typer.Option(0.2, help="Thickness of monochrome bottom layer"),
+    bottom_material: str = typer.Option("", help="Material of the bottom layer (default first material)"),
+    top_thickness: float = typer.Option(0.0, help="Thickness of monochrome top layer"),
+    top_material: str = typer.Option("", help="Material of the top layer (default first material)"),
     ordered: bool = typer.Option(False, help="Enforce ordered stacking (mainly for reflection)"),
 
     # Materials
@@ -70,6 +74,21 @@ def lithophane_command(
     if material_names is None:
         material_names = available_names
     material_count = len(material_names)
+    if bottom_material in available_names:
+        bottom_material_index = available_names.index(bottom_material)
+    elif bottom_material == "":
+        bottom_material_index = 0
+    else:
+        typer.secho(f"Invalid bottom material names: {bottom_material}. Materials found: {available_names}", fg=typer.colors.RED)
+        raise typer.Exit(1)
+    
+    if top_material in available_names:
+        top_material_index = available_names.index(top_material)
+    elif top_material == "":
+        top_material_index = 0
+    else:
+        typer.secho(f"Invalid bottom material names: {top_material}. Materials found: {available_names}", fg=typer.colors.RED)
+        raise typer.Exit(1)
     
     if len(material_names) != len(available_names):
         invalid = [m for m in material_names if m not in available_names]
@@ -84,10 +103,14 @@ def lithophane_command(
     # -------------------------
     # Stack topology (MVP: single homogeneous block)
     # -------------------------
-    stack_rules = generate_stack_rules_single_homogeneous_block(
-        layer_thickness=layer_thickness,
-        layer_count=layer_count,
+    stack_rules = generate_stack_rules_bottom_color_top_blocks(
+        color_layer_thickness=layer_thickness,
+        color_layer_count=layer_count,
         material_count=material_count,
+        bottom_thickness=bottom_thickness,
+        bottom_layer_material=bottom_material_index,
+        top_thickness=top_thickness,
+        top_layer_material=top_material_index,
         ordered=ordered,
     )
     stack_generator = StackGenerator(rules=stack_rules)

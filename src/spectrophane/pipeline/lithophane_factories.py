@@ -22,9 +22,25 @@ def generate_homogeneous_topology_block(layer_thickness: int, layer_count: int, 
 def generate_stack_rules_homogeneous_blocks(blocks: Sequence[TopologyBlock], ordered: bool = False) -> StackTopologyRules:
     return StackTopologyRules(blocks = blocks, ordered=ordered)
 
-def generate_stack_rules_single_homogeneous_block(layer_thickness: int, layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None, ordered: bool = False) -> StackTopologyRules:
+def generate_stack_rules_single_homogeneous_block(layer_thickness: float, layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None, ordered: bool = False) -> StackTopologyRules:
     block = generate_homogeneous_topology_block(layer_thickness=layer_thickness, layer_count=layer_count, material_count=material_count, material_layer_count_limits=material_layer_count_limits)
     return generate_stack_rules_homogeneous_blocks(blocks = [block], ordered=ordered)
+
+def generate_stack_rules_bottom_color_top_blocks(color_layer_thickness: float, color_layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None,
+                                                 bottom_thickness: float = 0.2, bottom_layer_material: int = 0, 
+                                                 top_thickness: float | None = None, top_layer_material: int | None = None, ordered: bool = False) -> StackTopologyRules:
+    if top_thickness is None:
+        top_thickness = bottom_thickness
+    if top_layer_material is None:
+        top_layer_material = bottom_layer_material
+    bottom_layer_limits = [0]*material_count
+    bottom_layer_limits[bottom_layer_material] = 1
+    bottom_block = generate_homogeneous_topology_block(layer_thickness=bottom_thickness, layer_count=1, material_count=material_count, material_layer_count_limits=np.array(bottom_layer_limits))
+    top_layer_limits = [0]*material_count
+    top_layer_limits[top_layer_material] = 1
+    top_block = generate_homogeneous_topology_block(layer_thickness=top_thickness, layer_count=1, material_count=material_count, material_layer_count_limits=np.array(top_layer_limits))
+    color_block = generate_homogeneous_topology_block(layer_thickness=color_layer_thickness, layer_count=color_layer_count, material_count=material_count, material_layer_count_limits=material_layer_count_limits)
+    return generate_stack_rules_homogeneous_blocks(blocks = [bottom_block, color_block, top_block], ordered=ordered)
 
 def generate_evaluator(material_parameter: MaterialParams, illuminators: LightSources, observers: Observers, config: EvaluatorSpec, edge_stacks: StackCandidates | None = None) -> Evaluator:
     register_with_jax() #in case renormalizer is called
