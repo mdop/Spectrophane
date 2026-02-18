@@ -58,6 +58,11 @@ def emit_training_outputs(material_data: Sequence[dict],
 
 
 def parameter_training_pipeline(calibration_filepath: str, output_path: str | None, calibration_local: bool = True, output_local: bool = True, config: TrainingConfig = TrainingConfig()):
+    """Process pipeline for parameter training and output. 
+    Calibration and output path may be resource paths or absolute paths, depending on _local switches.
+    Model is described by its registration string (see physics model for keys)
+    Observer CIE1931 is downloaded with the installation script.
+    """
     calib_path, out_path = resolve_training_paths(calibration_filepath,
                                                   output_path,
                                                   calibration_local=calibration_local,
@@ -84,33 +89,3 @@ def parameter_training_pipeline(calibration_filepath: str, output_path: str | No
                                    config=config)
 
     return output
-
-def parameter_training_pipeline(calibration_filepath: str, output_path: str | None, calibration_filepath_local: bool = True, output_path_local: bool = True,
-                                model: str = "kubelka_munk", observer: str = "CIE1931", training_steps = 1000, lr=1e-1,
-                                plotted_parameter: list[str] | None = []) -> tuple[MaterialParams, list[float]]:
-    """Process pipeline for parameter training and output. 
-    Calibration and output path may be resource paths or absolute paths, depending on _local switches.
-    Model is described by its registration string (see physics model for keys)
-    Observer CIE1931 is downloaded with the installation script.
-    If plotted_parameter is None no plotting is done, an empty list shows all parameter in subplots, otherwise only parameters in the list are plotted.
-    """
-    #pre-process arguments
-    if calibration_filepath_local:
-        calibration_filepath = get_resource_path(calibration_filepath)
-    if output_path_local:
-        output_path = get_resource_path(output_path)
-    
-    #load calibration data, train parameter
-    calibration_data = json.load(calibration_filepath)
-    material_list, image_data, spectrum_data, light_sources, observers, wavelength_axis = import_test_data(calibration_data)
-    material_count = len(material_list)
-    parameter, loss_series = train_parameter(model_name=model,
-                                             material_count=material_count,
-                                             wavelength_axis=wavelength_axis,
-                                             image_ref=image_data,
-                                             spectra_ref=spectrum_data,
-                                             light_sources=light_sources,
-                                             single_observer=observers.take_names(observer),
-                                             num_steps=training_steps,
-                                             lr=lr)
-    
