@@ -167,28 +167,31 @@ def test_serialize_parameter(mock_material_param, mock_material_metadata):
 def test_load_parameter(mock_material_metadata):
     file_dict = {}
     file_dict["materials"] = mock_material_metadata
+    file_dict["metadata"] = {"steps": 10, "lr": 0.1}
     file_dict["parameter"] = {  
                                 "absorption_coeff": [[1, 2, 3, 4, 5, 6]] * 2,
                                 "wl_start": 400,
                                 "wl_step": 10,
                              }
     
-    result = deserialize_parameter(file_dict)
-    print("TYPE:", type(result.absorption_coeff))
-    assert isinstance(result.absorption_coeff, np.ndarray)
-    assert np.allclose(result.absorption_coeff, np.array([[1, 2, 3, 4, 5, 6]] * 2))
-    assert result.scattering_coeff is None
+    params, metadata = deserialize_parameter(file_dict)
+    print("TYPE:", type(params.absorption_coeff))
+    assert isinstance(params.absorption_coeff, np.ndarray)
+    assert isinstance(metadata, dict)
+    assert np.allclose(params.absorption_coeff, np.array([[1, 2, 3, 4, 5, 6]] * 2))
+    assert params.scattering_coeff is None
 
 def test_parameter_serialize_deserialize(mock_material_metadata):
     parameter = MaterialParams( wl_start=400,
                                 wl_step=10,
                                 absorption_coeff=np.array([[1,2,3,4,5,6]]*2))
+    metadata = {"steps": 10, "lr": 0.1}
+    serialized = serialize_parameter(material_data=mock_material_metadata, parameter=parameter, metadata=metadata)
+    result_params, result_metadata = deserialize_parameter(serialized) # should complain if patching failed
 
-    serialized = serialize_parameter(mock_material_metadata, parameter)
-    result = deserialize_parameter(serialized) # should complain if patching failed
-
-    for field in fields(result):
+    for field in fields(result_params):
         if isinstance(getattr(parameter, field.name), np.ndarray):
-            assert np.allclose(getattr(parameter, field.name), getattr(result, field.name))
+            assert np.allclose(getattr(parameter, field.name), getattr(result_params, field.name))
         else:
-            assert getattr(parameter, field.name) == getattr(result, field.name)
+            assert getattr(parameter, field.name) == getattr(result_params, field.name)
+    assert metadata == result_metadata

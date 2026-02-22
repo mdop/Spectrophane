@@ -35,7 +35,7 @@ def dummy_spectral_file(tmp_path: Path):
 def mock_parameter(monkeypatch):
     def _apply(material_names=("A", "B")):
         def mock_file_to_parameter(path, local_path=False, material_filter=None):
-            return [{"name": n} for n in material_names], object()
+            return [{"name": n} for n in material_names], object(), {}
 
         monkeypatch.setattr(
             "spectrophane.application.cli.lithophane.file_to_parameter",

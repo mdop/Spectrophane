@@ -14,6 +14,7 @@ def build_cli_args(
     **overrides,
 ):
     args = [
+        "lithophane",
         "--parameter-file", str(dummy_parameter_file),
         "--spectral-config", str(dummy_spectral_file),
         "--image-path", str(dummy_image),

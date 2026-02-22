@@ -118,7 +118,7 @@ def plot_loss_series(losses: Sequence[float]):
 
     return fig
 
-def serialize_parameter(material_data: list, parameter: MaterialParams) -> dict:
+def serialize_parameter(material_data: list, parameter: MaterialParams, metadata: dict = {}) -> dict:
     """Serializes trained parameter set to json and saves to file."""
     param_dict = {}
     param_dict["materials"] = material_data
@@ -132,11 +132,13 @@ def serialize_parameter(material_data: list, parameter: MaterialParams) -> dict:
             param_dict["parameter"][field.name] = value.tolist()
         else:
             param_dict["parameter"][field.name] = value
+    if metadata:
+        param_dict["metadata"] = metadata
     return param_dict
     
 
-def deserialize_parameter(param_dict: dict) -> MaterialParams:
-    """Deserializes saved training parameter data."""
+def deserialize_parameter(param_dict: dict) -> tuple[MaterialParams, dict]:
+    """Deserializes saved training parameter data. Returns parameter and metadata"""
     result = MaterialParams(wl_start=param_dict["parameter"]["wl_start"],
                             wl_step=param_dict["parameter"]["wl_step"])
     for field in dataclasses.fields(result):
@@ -151,4 +153,4 @@ def deserialize_parameter(param_dict: dict) -> MaterialParams:
             value = deserializer(value)
 
         setattr(result, field.name, value)
-    return result
+    return result, param_dict.get("metadata", {})

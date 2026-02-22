@@ -68,7 +68,7 @@ def lithophane_command(
     # -------------------------
     # Load parameter file
     # -------------------------
-    materials, material_parameter = file_to_parameter(path=parameter_file, local_path=False, material_filter=material_names)
+    materials, material_parameter, metadata = file_to_parameter(path=parameter_file, local_path=False, material_filter=material_names)
 
     available_names = [m["name"] for m in materials]
     if material_names is None:

@@ -33,9 +33,15 @@ def emit_training_outputs(material_data: Sequence[dict],
     output = {}
 
     #parameter to disk
+    metadata = {"model": config.model,
+                "observer": config.observer,
+                "steps": config.steps,
+                "lr": config.lr}
+    if loss_series:
+        metadata["losses"] = loss_series
     if output_path is not None:
         output_path.mkdir(parents=True, exist_ok=True)
-        serialized_output = serialize_parameter(params, output_path)
+        serialized_output = serialize_parameter(material_data=material_data, parameter=params, metadata=metadata)
         with open(output_path, "w") as file:
             json.dump(serialized_output, file, indent=4)
 
