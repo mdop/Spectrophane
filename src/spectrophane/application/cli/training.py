@@ -16,7 +16,7 @@ def training_command(
     training_steps: int = typer.Option(1000),
     lr: float = typer.Option(1e-1),
 
-    parameter_plot_filter: Optional[List[str]] = typer.Option(None),
+    parameter_plot_filter: Optional[List[str]] = typer.Option(tuple()),
     parameter_plot_rows: int = typer.Option(1),
     show_color_comparison: bool = typer.Option(False),
 ):

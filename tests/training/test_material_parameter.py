@@ -77,7 +77,7 @@ def test_no_wrapping_needed(monkeypatch: MonkeyPatch, capfd: CaptureFixture[str]
 
 
 def test_extract_spectral_blocks(mock_material_param, mock_material_metadata):
-    blocks = extract_spectral_plot_series(mock_material_param, mock_material_metadata)
+    blocks = extract_spectral_plot_series(mock_material_metadata, mock_material_param)
     wavelengths = [400,410,420,430,440,450]
 
     assert len(blocks) == len(mock_material_metadata) * 3

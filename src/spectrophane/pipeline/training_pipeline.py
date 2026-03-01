@@ -39,8 +39,9 @@ def emit_training_outputs(material_data: Sequence[dict],
                 "lr": config.lr}
     if loss_series:
         metadata["losses"] = loss_series
+    output["metadata"] = metadata
     if output_path is not None:
-        output_path.mkdir(parents=True, exist_ok=True)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         serialized_output = serialize_parameter(material_data=material_data, parameter=params, metadata=metadata)
         with open(output_path, "w") as file:
             json.dump(serialized_output, file, indent=4)
@@ -83,7 +84,7 @@ def parameter_training_pipeline(calibration_filepath: str, output_path: str | No
                                                                 spectra_ref=spectra_ref,
                                                                 light_sources=light_sources,
                                                                 single_observer=observers.take_names(config.observer),
-                                                                num_steps=config.training_steps,
+                                                                num_steps=config.steps,
                                                                 lr=config.lr)
 
     output = emit_training_outputs(material_data=material_list,

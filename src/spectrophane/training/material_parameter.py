@@ -54,7 +54,7 @@ def terminal_color_comparison_string(calculated_colors: jnp.ndarray | np.ndarray
         print(real)
 
 
-def extract_spectral_plot_series(params:MaterialParams, metadata: list[dict[str]], field_filter: list[str] = []) -> list[SpectrumPlotLineData]:
+def extract_spectral_plot_series(metadata: list[dict[str]], params:MaterialParams, field_filter: list[str] = []) -> list[SpectrumPlotLineData]:
     """Parses material parameter and their metadata to create a list of plot data of all fields. If field filter is empty all fields are accepted, otherwise only field names contained in the list are appended."""
     if len(metadata) != params.absorption_coeff.shape[0]:
         raise ValueError("Cannot zip metadata and material parameter, they have different lengths!")
@@ -82,14 +82,15 @@ def plot_parameter(series: list[SpectrumPlotLineData], *, rows: int = 0, x_label
     if rows <= 0:
         rows = len(parameters)
     cols = ceil(len(parameters) / rows)
-    fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, subplot_titles=parameters)
-    row_index = {p: i + 1 for i, p in enumerate(parameters)}
+    fig = make_subplots(rows=rows, cols=cols, shared_xaxes=True, subplot_titles=parameters)
+    row_index = {p: i+1 for i, p in enumerate(parameters)}
 
     for b in series:
+        parameter_index = parameters.index(b.parameter)
         fig.add_trace(
             go.Scatter(x=b.wavelengths, y=b.values, mode="lines", name=b.material_name, legendgroup=b.material_id, line=dict(color=f"#{b.plotcolor}")),
-            row=row_index[b.parameter],
-            col=1,
+            row=parameter_index // cols + 1,
+            col=parameter_index %  cols + 1,
         )
 
     fig.update_layout(xaxis_title=x_label, yaxis_title=y_label, template="plotly_white", legend_title="Material")
@@ -118,6 +119,12 @@ def plot_loss_series(losses: Sequence[float]):
 
     return fig
 
+def _serialize_value(value):
+    if isinstance(value, (jnp.ndarray, np.ndarray)):
+        return value.tolist()
+    else:
+        return value
+
 def serialize_parameter(material_data: list, parameter: MaterialParams, metadata: dict = {}) -> dict:
     """Serializes trained parameter set to json and saves to file."""
     param_dict = {}
@@ -128,12 +135,11 @@ def serialize_parameter(material_data: list, parameter: MaterialParams, metadata
     for field in dataclasses.fields(parameter):
         value = getattr(parameter, field.name)
         #arrays to list, otherwise use value directly
-        if isinstance(value, (jnp.ndarray, np.ndarray)):
-            param_dict["parameter"][field.name] = value.tolist()
-        else:
-            param_dict["parameter"][field.name] = value
+        param_dict["parameter"][field.name] = _serialize_value(value)
     if metadata:
-        param_dict["metadata"] = metadata
+        param_dict["metadata"] = {}
+        for key, value in metadata.items():
+            param_dict["metadata"][key] = _serialize_value(value)
     return param_dict
     
 
