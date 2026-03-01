@@ -29,8 +29,8 @@ def import_test_data(input_data: dict) -> Tuple[list, TrainingRefImageData, Trai
     image_ref_data = parse_image_data(input_data)
     spectrum_ref_data = prepare_spectrum_data(input_data)
     target_axis = WavelengthAxis(start=spectrum_ref_data.min_wavelength, step=spectrum_ref_data.step_wavelength, length=spectrum_ref_data.transmission_spectra.shape[1])
-    light_sources = parse_light_sources(input_data, target_axis)
-    observer = parse_observers(input_data, target_axis)
+    light_sources = parse_light_sources(input_data)
+    observer = parse_observers(input_data)
     return input_data["materials"], jaxify(image_ref_data), jaxify(spectrum_ref_data), jaxify(light_sources), jaxify(observer), target_axis
 
 def initialize_parameter(model: BaseTheory, material_count, wavelength_axis: WavelengthAxis):
@@ -40,8 +40,8 @@ def initialize_parameter(model: BaseTheory, material_count, wavelength_axis: Wav
     else:
         return MaterialParams(wl_start=wavelength_axis.start,
                               wl_step=wavelength_axis.step,
-                              absorption_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64),
-                              scattering_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64))
+                              absorption_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64)*10,
+                              scattering_coeff=jnp.ones((material_count, wavelength_axis.length), dtype=jnp.float64)*10)
 
 def calibration_images_to_xyz(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
     pred_transmission_image_spectrum = model.transmission_batch(ref_image_data.transmission_stacks, parameter)
@@ -52,15 +52,24 @@ def calibration_images_to_xyz(model: BaseTheory, parameter: jnp.ndarray, ref_ima
 def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: TrainingRefImageData, ref_spectrum_data: TrainingRefSpectraData, light_sources: jnp.ndarray, CIE1931: jnp.ndarray):
     """Calculates loss for spectrum and image data."""
     #calculate predicted spectra batched and take mean difference of Reflection/Transmission as loss
-    pred_spectrum_transmission = model.transmission_batch(ref_spectrum_data.transmission_stacks, parameter)
-    pred_spectrum_reflection = model.reflection_batch(ref_spectrum_data.reflection_stacks, parameter, ref_spectrum_data.reflection_background)
-    spectrum_transmission_loss = jnp.mean(jnp.abs(pred_spectrum_transmission-ref_spectrum_data.transmission_spectra), axis=0)
-    spectrum_reflection_loss = jnp.mean(jnp.abs(pred_spectrum_reflection-ref_spectrum_data.reflection_spectra), axis=0)
+    if len(ref_spectrum_data.transmission_spectra) == 0:
+        spectrum_transmission_loss = jnp.zeros(ref_spectrum_data.transmission_spectra.shape[1])
+    else:
+        pred_spectrum_transmission = model.transmission_batch(ref_spectrum_data.transmission_stacks, parameter)
+        spectrum_transmission_loss = jnp.mean(jnp.abs(pred_spectrum_transmission-ref_spectrum_data.transmission_spectra), axis=0)
+    if len(ref_spectrum_data.reflection_spectra) == 0:
+        spectrum_reflection_loss = jnp.zeros(ref_spectrum_data.reflection_spectra.shape[1])
+    else:
+        pred_spectrum_reflection = model.reflection_batch(ref_spectrum_data.reflection_stacks, parameter, ref_spectrum_data.reflection_background)
+        spectrum_reflection_loss = jnp.mean(jnp.abs(pred_spectrum_reflection-ref_spectrum_data.reflection_spectra), axis=0)
     spectrum_loss = jnp.mean(jnp.stack((spectrum_reflection_loss, spectrum_transmission_loss), axis=0), axis = None)
 
     #calculate predicted xyz. Use CIE 1931 observer to adhere to sRGB definition, for human perception later CIE 1964 is better suited
-    pred_transmission_image_xyz = calibration_images_to_xyz(model, parameter, ref_image_data, light_sources, CIE1931)
-    image_loss = jnp.mean(jnp.abs(pred_transmission_image_xyz - ref_image_data.transmission_xyz),None)
+    if len(ref_image_data.transmission_xyz) == 0:
+        image_loss = 0
+    else:
+        pred_transmission_image_xyz = calibration_images_to_xyz(model, parameter, ref_image_data, light_sources, CIE1931)
+        image_loss = jnp.mean(jnp.abs(pred_transmission_image_xyz - ref_image_data.transmission_xyz),None)
 
     #combine losses to total loss
     #TODO: Improve total loss calculation from manual weights, e.g. Uncertainty-based weighting (Kendall et al., CVPR 2018) or GradNorm?
@@ -96,7 +105,7 @@ def train_parameter(model_name: str, material_count: int,
 
     for step in range(num_steps):
         parameter, opt_state, loss = train_step(parameter, opt_state)
-        losses[step] = loss
+        losses[step] = float(loss)
     
     calc_colors = None
     if get_final_image_colors:

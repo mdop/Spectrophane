@@ -5,7 +5,10 @@ from spectrophane.core.dataclasses import StackData
 
 def stack_json_to_array(material_list: Sequence[Dict], stack_data: Sequence[Dict]) -> StackData:
     """Takes a material list and a list of material names + thicknesses and morphs them into a padded numpy material and thickness, and a stacklength array."""
-    max_layers = max(len(stack) for stack in stack_data)
+    if stack_data:
+        max_layers = max(len(stack) for stack in stack_data)
+    else:
+        max_layers = 0
     n_stacks = len(stack_data)
 
     
