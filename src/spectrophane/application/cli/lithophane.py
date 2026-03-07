@@ -31,7 +31,7 @@ app = typer.Typer()
 def lithophane_command(
     # Paths
     parameter_file: Path = typer.Option(..., exists=True),
-    spectral_config: Path = typer.Option(..., exists=True),
+    spectral_config: Path = typer.Option(None, exists=True),
     image_path: Path = typer.Option(..., exists=True),
     output_base: Path = typer.Option(...),
 
@@ -59,7 +59,7 @@ def lithophane_command(
 
     # Inverter
     inverter_algorithm: str = typer.Option("lut"),
-    lut_compression_factor: Optional[int] = typer.Option(None),
+    lut_compression_factor: Optional[int] = typer.Option(4),
 ):
     """
     Generate a color lithophane from an RGB image.
@@ -179,13 +179,24 @@ def lithophane_command(
     # -------------------------
     # Run pipeline
     # -------------------------
-    output_paths, _, _ = image_to_lithophane(
+    output_paths, expected_img_arr, score_img_arr = image_to_lithophane(
         image=image,
         output_base_path=output_base,
+        material_names=available_names,
         inverter=inverter,
         stack_rules=stack_rules,
         config=litho_config,
     )
+
+    output_base_stem = str(Path(output_base).with_suffix(""))
+    expected_img = Image.fromarray(expected_img_arr)
+    expected_img.show()
+    expected_img.save(output_base_stem + "_expected.jpg")
+    score_img = Image.fromarray(score_img_arr)
+    score_img.show()
+    score_img.save(output_base_stem + "_score.jpg")
+
+
 
     typer.secho("Lithophane generation complete.", fg=typer.colors.GREEN)
     for p in output_paths:

@@ -3,7 +3,7 @@ from PIL import ImageFile
 import json
 import numpy as np
 
-from spectrophane.core.dataclasses import MaterialParams, LightSources, Observers, EvaluatorSpec, InverterSpec, StackTopologyRules, LithophaneConfig
+from spectrophane.core.dataclasses import MaterialParams, LightSources, Observers, EvaluatorSpec, InverterSpec, StackTopologyRules, LithophaneConfig, StackCandidates
 from spectrophane.color.spectral_helper import parse_light_sources, parse_observers
 from spectrophane.inverse.inverter import Inverter
 from spectrophane.inverse.stack_generation import StackGenerator
@@ -55,11 +55,19 @@ def parameter_to_inverter(material_parameter: MaterialParams,
                           observers: Observers,
                           stack_generator: StackGenerator,
                           evaluator_config: EvaluatorSpec,
-                          inverter_config: InverterSpec) -> Inverter:
+                          inverter_config: InverterSpec,
+                          normalization_stacks: StackCandidates = None) -> Inverter:
+    if not evaluator_config.normalize:
+        edge_stacks = None #if config says no ignore argument
+    elif normalization_stacks is None:
+        edge_stacks = stack_generator.generate("single material")
+    else:
+        edge_stacks = normalization_stacks
     evaluator = generate_evaluator(material_parameter=material_parameter,
                                    illuminators=illuminators,
                                    observers=observers,
-                                   config=evaluator_config)
+                                   config=evaluator_config,
+                                   edge_stacks=edge_stacks)
     inverter = generate_inverter(stack_generator=stack_generator,
                                  evaluator=evaluator,
                                  config=inverter_config)
@@ -67,6 +75,7 @@ def parameter_to_inverter(material_parameter: MaterialParams,
 
 def image_to_lithophane(image: ImageFile,
                         output_base_path: str | PosixPath,
+                        material_names: list[str],
                         inverter: Inverter,
                         stack_rules: StackTopologyRules,
                         config: LithophaneConfig) -> tuple[list[str], np.ndarray, np.ndarray]:
@@ -77,6 +86,7 @@ def image_to_lithophane(image: ImageFile,
                                                                         inverter=inverter,
                                                                         layer_thicknesses=stack_rules.layer_thicknesses,
                                                                         voxel_size_xy=config.pixel_xy_dimension,
+                                                                        material_names=material_names,
                                                                         builder=builder,
                                                                         export_backend=backend)
     return output_paths, calc_image, score_img

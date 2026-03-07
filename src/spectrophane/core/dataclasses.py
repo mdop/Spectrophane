@@ -290,6 +290,7 @@ class EvaluatorSpec:
     view_geometry: str = "transmission"         # "transmission" or "reflection"
     background: SpectrumBlock | float = 1.0     # background reflectivity. Only relevant for reflection view geometry, values in range [0.0,1.0]. Single value is interpreted as flat spectrum
     edge_stacks: StackCandidates | None = None  # To expand color gamut extreme stack combinations may be used to renormalize color output. Use if original light source is not visible to viewer (typically in transmission case)
+    normalize: bool = True                      # if true evaluator will normalize color space to brightest edge case stack.
 
 @dataclass(frozen=True)
 class InverterSpec:
