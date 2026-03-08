@@ -30,10 +30,11 @@ app = typer.Typer()
 
 def lithophane_command(
     # Paths
-    parameter_file: Path = typer.Option(..., exists=True),
+    parameter_file: str = typer.Option("material_parameter/default.json", exists=True),
     spectral_config: Path = typer.Option(None, exists=True),
     image_path: Path = typer.Option(..., exists=True),
     output_base: Path = typer.Option(...),
+    parameter_file_package_resource: bool = typer.Option(True, help="parameter file path is relative to a package resource path (either in the package or in user config directory)"),
 
     # Stack topology
     layer_count: int = typer.Option(..., help="Number of layers"),
@@ -68,7 +69,7 @@ def lithophane_command(
     # -------------------------
     # Load parameter file
     # -------------------------
-    materials, material_parameter, metadata = file_to_parameter(path=parameter_file, local_path=False, material_filter=material_names)
+    materials, material_parameter, metadata = file_to_parameter(path=parameter_file, local_path=parameter_file_package_resource, material_filter=material_names)
 
     available_names = [m["name"] for m in materials]
     if material_names is None:
