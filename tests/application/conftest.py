@@ -77,5 +77,13 @@ def mock_inverter(monkeypatch):
 def mock_image_generation(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "spectrophane.application.cli.lithophane.image_to_lithophane",
-        lambda **kwargs: ([str(tmp_path / "out.stl")], None, None),
+        lambda **kwargs: ([str(tmp_path / "out.stl")], np.random.randint(0,255,(3,3,3)).astype(np.uint8), np.random.randint(0,255,(3,3)).astype(np.uint8)),
     )
+
+@pytest.fixture(autouse=True)
+def suppress_pil_show(monkeypatch):
+    """Prevent PIL.Image.show() from opening image viewers during tests."""
+    def _no_show(self, *args, **kwargs):
+        return None
+
+    monkeypatch.setattr(Image.Image, "show", _no_show)
