@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import dataclasses
 
 from spectrophane.core.dataclasses import WavelengthAxis, SpectrumBlock, MaterialParams
 
@@ -124,3 +125,22 @@ def test_material_param_filtering():
     assert initial.scattering_coeff == result.scattering_coeff
     assert result.absorption_coeff.shape == (2,100)
     assert np.all(initial.absorption_coeff[1] == result.absorption_coeff[0])
+
+def test_materialparams_clip():
+    wl_start = 400
+    wl_step = 10
+    absorption_coeff = np.array([-0.1, 0.5, 1.2, 2.0, 3.0])
+    scattering_coeff = np.array([0.2, -0.6, -1.5, 2.5, 3.5])
+    model_type = "kubelka_munk"
+
+    params = MaterialParams(
+        wl_start=wl_start,
+        wl_step=wl_step,
+        absorption_coeff=absorption_coeff,
+        scattering_coeff=scattering_coeff,
+        model_type=model_type
+    )
+    clipped_params = params.clip()
+
+    assert np.all(clipped_params.absorption_coeff > 0)
+    assert np.all(clipped_params.scattering_coeff > 0)

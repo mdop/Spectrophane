@@ -1,8 +1,7 @@
-from typing import Tuple, Optional, Sequence, Self
+from typing import Tuple, Optional, Sequence, Self, Callable, Any
 import numpy as np
 from numbers import Number
-from dataclasses import dataclass, field
-import dataclasses
+from dataclasses import dataclass, field, fields
 
 @dataclass
 class WavelengthAxis:
@@ -192,28 +191,59 @@ class MaterialParams:
     wl_step: Number
     absorption_coeff: Optional[np.ndarray] | None = field(
         default=None,
-        metadata={"deserialize": np.array, "filter": True}
+        metadata={"deserialize": np.array, "filter": True, "clip": True, "min": 1e-10} #min of <=0 can caus nan in training with photos
     )
     scattering_coeff: Optional[np.ndarray] | None = field(
         default=None,
-        metadata={"deserialize": np.array, "filter": True}
+        metadata={"deserialize": np.array, "filter": True, "clip": True, "min": 1e-10}
     )
     model_type: Optional[str] = None  # "kubelka_munk" (others tbd e.g. "saunderson", "monte_carlo")
     
+    def apply_to_fields(self, func: Callable[[Any, Any], Any], *args, **kwargs) -> "MaterialParams":
+        """
+        Apply a function to fields.
+        func(field, *args, **kwargs) -> new_value
+        """
+
+        new_values = {}
+
+        for f in fields(self):
+            value = getattr(self, f.name)
+
+            if value is None:
+                new_values[f.name] = None
+                continue
+
+            new_values[f.name] = func(f, *args, **kwargs)
+
+        return type(self)(**new_values)
+
     def take(self, indexes: np.ndarray) -> "MaterialParams":
-        # Create a new instance of MaterialParams
-        new_instance = MaterialParams(
-            wl_start=self.wl_start,
-            wl_step=self.wl_step,
-            model_type=self.model_type
-        )
+        """
+        Select indices from array-like fields.
+        """
+        def take_func(field, indexes):
+            value = getattr(self, field.name)
+            if field.metadata.get("filter", False):
+                return value[indexes]
+            else:
+                return value
 
-        # Iterate over the fields and apply take only to NumPy arrays
-        for field in dataclasses.fields(self):
-            if field.metadata.get("deserialize", False) and (not getattr(self, field.name) is None):
-                setattr(new_instance, field.name, getattr(self, field.name)[indexes])
+        return self.apply_to_fields(take_func, indexes)
 
-        return new_instance
+    def clip(self) -> "MaterialParams":
+        """
+        Clip values based on metadata and/or explicit arguments. If nan_replace_num is set nan is changed to the specified number.
+        Explicit args override metadata.
+        """
+
+        def clip_func(field):
+            value = getattr(self, field.name)
+            if field.metadata.get("clip", False):
+                value = value.clip(field.metadata.get("min", None), field.metadata.get("max", None))
+            return value
+
+        return self.apply_to_fields(clip_func)
 
 
 @dataclass
