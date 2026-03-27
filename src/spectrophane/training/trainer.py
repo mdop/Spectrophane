@@ -73,7 +73,7 @@ def compute_loss(model: BaseTheory, parameter: jnp.ndarray, ref_image_data: Trai
 
     #combine losses to total loss
     #TODO: Improve total loss calculation from manual weights, e.g. Uncertainty-based weighting (Kendall et al., CVPR 2018) or GradNorm?
-    total_loss = 0.7 * spectrum_loss + 0.3 * image_loss
+    total_loss = 0.98 * spectrum_loss + 0.02 * image_loss
     return total_loss
 
 
@@ -101,6 +101,7 @@ def train_parameter(model_name: str, material_count: int,
         loss, grads = grad_fn(params)
         updates, opt_state = optimizer.update(grads, opt_state, params)
         params = optax.apply_updates(params, updates)
+        params = params.clip()
         return params, opt_state, loss
 
     for step in range(num_steps):
