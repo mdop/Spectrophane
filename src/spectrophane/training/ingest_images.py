@@ -2,9 +2,11 @@ import rawpy
 import numpy as np
 from PIL import Image
 from pathlib import Path
-from typing import Sequence, Callable
+from typing import Sequence, Callable, Iterator
 
-from spectrophane.core.dataclasses import TrainingRefImageData, WavelengthAxis
+from PIL import Image, ImageDraw
+
+from spectrophane.core.dataclasses import TrainingRefImageData
 from spectrophane.io.resources import get_resource_path
 from spectrophane.color.conversions import linrgb_to_xyz, decode_rgb
 from spectrophane.training.ingest_stacks import stack_json_to_array
@@ -33,7 +35,7 @@ def import_image(filename: str) -> np.ndarray:
     """Takes the filename and imports the raw image file (jnp, raw) or rgb image. Returns numpy array with rgb intensities in [0,1]"""
     path = Path(filename)
     match path.suffix.lstrip("."):
-        case "jnp" | "raw" | "nef" | "cr2" | "arw" | "raf":
+        case "jnp" | "raw" | "nef" | "cr2" | "arw" | "raf" | "dng":
             return raw_to_linear_rgb(filename)
         case _:
             return rgb_image_to_linrgb(filename)
@@ -44,11 +46,11 @@ def calibrate_spatial_brightness(whiteimage: np.ndarray, whitefield: Sequence[in
     pass
     
 def roi_filter(image: np.ndarray, roi: Sequence[int]) -> np.ndarray:
-    """returns valid pixel values inside the specified roi. Clips rois outside of image size."""
+    """returns valid pixel values inside the specified roi specified by (x1, y1, size_x, size_y). Clips rois outside of image size."""
     x0 = roi[0]
     y0 = roi[1]
-    x1 = roi[2]+1
-    y1 = roi[3]+1
+    x1 = roi[0]+roi[2]+1
+    y1 = roi[1]+roi[3]+1
     patch = image[y0:y1, x0:x1, :]
     valid = (patch < 1).all(axis=2)
     return patch[valid]
@@ -101,7 +103,7 @@ def parse_image_data(input_data):
             filepath = get_resource_path("training_data/images/" + image_data["filename"])
         else:
             filepath = image_data["filename"]
-        image_array = import_image(filepath)
+        image_array = import_image(str(filepath))
         xyz_imagecolors = process_image_to_xyz(image_array, white_rois, black_rois, color_rois)
         xyz_colors.extend(xyz_imagecolors)
         stack_dictlist.extend(image_stack_dictlist)
@@ -110,3 +112,46 @@ def parse_image_data(input_data):
     light_sources_index_array = np.array(light_sources_indexes)
     stack_data = stack_json_to_array(input_data["materials"], stack_dictlist)
     return TrainingRefImageData(stack_data, xyz_array, light_sources_index_array)
+
+
+def calibration_images_with_rois(input_data) -> Iterator[Image.Image]:
+    """Displays all calibration images used in parse_image_data with ROIs shown in the images."""
+    for image_data in input_data["images"]["measurement_images"]["transmission"]:
+        # Get image path
+        if image_data.get("internal_path", True):
+            filepath = get_resource_path("training_data/images/" + image_data["filename"])
+        else:
+            filepath = image_data["filename"]
+        
+        # Load image using import_image (handles both raw and normal images)
+        image_array = import_image(str(filepath))
+        
+        # Convert the numpy array to a PIL Image
+        image = Image.fromarray((image_array * 255).astype(np.uint8))
+        
+        # Create a drawing context
+        draw = ImageDraw.Draw(image)
+        
+        # Draw white ROIs
+        for roi in image_data["white_refs"]:
+            x0, y0, size_x, size_y = roi
+            x1 = x0 + size_x
+            y1 = y0 + size_y
+            draw.rectangle([x0, y0, x1, y1], outline="black", width=2)
+        
+        # Draw black ROIs
+        for roi in image_data["black_refs"]:
+            x0, y0, size_x, size_y = roi
+            x1 = x0 + size_x
+            y1 = y0 + size_y
+            draw.rectangle([x0, y0, x1, y1], outline="white", width=2)
+        
+        # Draw color ROIs
+        for area in image_data["measurement_areas"]:
+            roi = area["roi"]
+            x0, y0, size_x, size_y = roi
+            x1 = x0 + size_x
+            y1 = y0 + size_y
+            draw.rectangle([x0, y0, x1, y1], outline="grey", width=2)
+        
+        yield image

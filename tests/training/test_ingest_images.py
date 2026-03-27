@@ -95,7 +95,7 @@ def test_import_image(mocker, mock_raw_image, extension, type):
 def test_roi_filter(mock_linrgb_image, mock_roi):
     result = roi_filter(mock_linrgb_image, mock_roi)
     assert isinstance(result, np.ndarray)
-    assert result.shape == (11*11, 3)
+    assert result.shape == (21*21, 3)
 
 # Test aggregate_rois
 def test_aggregate_rois(mock_linrgb_image, mock_roi):
