@@ -327,9 +327,84 @@
   },
   "images": {
     "brightness_calibrations": [
+      {
+        "id": "profile1",
+        "filename": "illumination_profile1.dng",
+        "measurement_area": [1511,907,1278,1280]
+      }
     ],
     "measurement_images": {
       "transmission": [
+        {
+          "filename": "magenta.dng",
+          "illuminated_field": [1502,912,1304,1301],
+          "brightness_calibration": "profile1",
+          "light_source": "bl_led_0.2_white",
+          "white_refs": [[2013,1419,281,301],[2569,912,208,165],[1508,953,191,152],[1530,2020,151,170],[2653,2039,156,157]],
+          "black_refs": [[1111,263,2175,507]],
+          "measurement_areas": [
+            {
+              "stack": [{"id": "bl_magenta", "d":0.03}],
+              "roi": [2371,1412,87,61]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.06}],
+              "roi": [2292,1323,83,56]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.09}],
+              "roi": [2188,1276,81,63]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.12}],
+              "roi": [2088,1267,76,75]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.15}],
+              "roi": [1985,1288,69,73]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.18}],
+              "roi": [1907,1377,67,62]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.21}],
+              "roi": [1836,1465,82,81]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.24}],
+              "roi": [1835,1571,80,79]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.27}],
+              "roi": [1887,1677,69,75]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.30}],
+              "roi": [1964,1759,66,78]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.33}],
+              "roi": [2059,1799,80,87]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.36}],
+              "roi": [2172,1803,73,85]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.39}],
+              "roi": [2269,1767,63,78]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.42}],
+              "roi": [2344,1682,62,77]
+            },
+            {
+              "stack": [{"id": "bl_magenta", "d":0.45}],
+              "roi": [2387,1577,71,81]
+            }
+          ]
+        }
       ]
     }
   }
