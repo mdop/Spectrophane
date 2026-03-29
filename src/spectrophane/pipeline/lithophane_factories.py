@@ -8,7 +8,7 @@ from spectrophane.evaluation.evaluator import Evaluator
 from spectrophane.evaluation.cache import ForwardCache
 from spectrophane.inverse.stack_generation import StackGenerator
 from spectrophane.inverse.inverter import Inverter, LUTInverter
-from spectrophane.lithophane.solid_generation import SolidBuilder, PerVoxelBoxBuilder
+from spectrophane.lithophane.solid_generation import SolidBuilder, PerVoxelBoxBuilder, GreedyMeshingBoxBuilder
 from spectrophane.lithophane.export import SolidBackend, STLTessellationBackend
 
 def generate_homogeneous_topology_block(layer_thickness: int, layer_count: int, material_count: int, material_layer_count_limits: np.ndarray | None = None) -> TopologyBlock:
@@ -81,6 +81,8 @@ def generate_inverter(stack_generator: StackGenerator, evaluator: Evaluator, con
 def generate_lithophane_solid_builder(config: LithophaneConfig) -> SolidBuilder:
     if config.builder_algorithm == "voxel":
         builder = PerVoxelBoxBuilder()
+    elif config.builder_algorithm == "greedy":
+        builder = GreedyMeshingBoxBuilder()
     else:
         raise ValueError(f"Unknown lithophane solid builder algorithm {config.builder_algorithm}")
     return builder

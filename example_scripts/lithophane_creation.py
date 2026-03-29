@@ -14,11 +14,11 @@ result = runner.invoke(
         "lithophane",
         "--image-path", str(image_path),
         "--output-base", str(output_base_path),
-        "--layer-count", 8,
+        "--layer-count", 10,
         "--layer-thickness", 0.03,
         "--top-thickness", 0.03,
-        "--resolution", 100,150,
-        "--pixel-size", 0.8,0.8,
+        "--resolution", 200,300,
+        "--pixel-size", 0.4,0.4,
     ],
 )
 print(result.exit_code)
