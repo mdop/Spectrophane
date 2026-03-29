@@ -6,8 +6,8 @@ MATRIX_sRGB_TO_XYZ = np.array([
     [0.4124, 0.3576, 0.1805],
     [0.2126, 0.7152, 0.0722],
     [0.0193, 0.1192, 0.9505],
-])
-MATRIX_XYZ_TO_sRGB = np.linalg.inv(MATRIX_sRGB_TO_XYZ)
+]).astype(np.float32)
+MATRIX_XYZ_TO_sRGB = np.linalg.inv(MATRIX_sRGB_TO_XYZ.astype(np.float64)).astype(np.float32)
 
 def _rgb_xyz_conversion(target: str, source_values: np.ndarray, matrix: str|np.ndarray = "sRGB", clip: bool = True):
     """transforms numpy array of shape (N,3) or (3,) between (linear) rgb and xyz space. Matrix argument may be a transformation matrix or a name. 

@@ -46,14 +46,18 @@ class LUTInverter(Inverter):
     def _generate_lut(self):
         """Generates lookup table for color requests"""
         self._stacks = self._stack_generator.generate("complete")
-        stack_xyz = self._eval.evaluate(stacks=self._stacks)
+        stack_xyz = self._eval.evaluate(stacks=self._stacks).astype(np.float32)
         self._stacks.rgb = np.rint(encode_rgb(xyz_to_linrgb(stack_xyz))*255)
         xyz_space = self._generate_xyz_space()
 
-        # Flatten voxel grid , calculate L2 distance
+        #to find distances use ∣∣a−b∣∣^2=∣∣a∣∣^2+∣∣b∣∣^2−2a⋅b
         xyz_flat = xyz_space.reshape(-1, 3)  # (n_voxels, 3)
-        diff = xyz_flat[:, None, :] - stack_xyz[None, :, :] #(n_voxels, n_stacks, 3)
-        dist2 = np.sum(diff * diff, axis=2) #(n_voxels, n_stacks)
+        a2 = np.sum(xyz_flat**2, axis=1, keepdims=True)      # (n_voxels, 1)
+        b2 = np.sum(stack_xyz**2, axis=1, keepdims=True).T   # (1, n_stacks)
+
+        # Compute pairwise squared distances
+        dist2 = a2 + b2 - 2 * xyz_flat @ stack_xyz.T         # (n_voxels, n_stacks)
+        # Flatten voxel grid , calculate L2 distance
 
         # Best stack per voxel
         best_stack_idx = np.argmin(dist2, axis=1) #(n_voxels,)
