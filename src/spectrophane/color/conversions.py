@@ -48,19 +48,13 @@ def encode_rgb(linrgb_arr: np.ndarray) -> np.ndarray:
 
 
 def xyz_to_lab(xyz: np.ndarray, white: np.ndarray):
-    """Converts a set of xyz values into lab values for a given white point coordinate. xyz shape (N,3) or (3,), white shape (3,). Returns shape of xyz"""
-    single = False
-
-    single = xyz.ndim == 1
-    if single:
-        xyz = xyz.reshape(1, 3)
-
-    assert xyz.shape[1] == 3
-    assert white.shape == (3,)
-    assert np.all(white > 0)
+    """Converts a set of xyz values into lab values for a given white point coordinate. xyz shape (...,3), white shape (3,). Returns shape of xyz"""
+    assert xyz.shape[-1] == 3, "Last dimension of xyz must be 3"
+    assert white.shape == (3,), "White must be shape (3,)"
+    assert np.all(white > 0), "White point must be positive"
 
     # Normalize
-    xyz_n = xyz / white.reshape(1, 3)
+    xyz_n = xyz / white
 
     # Constants
     epsilon = 216.0 / 24389  # 0.008856
@@ -74,13 +68,13 @@ def xyz_to_lab(xyz: np.ndarray, white: np.ndarray):
     )
 
     # Compute Lab
-    L = 116 * f[:, 1] - 16
-    a = 500 * (f[:, 0] - f[:, 1])
-    b = 200 * (f[:, 1] - f[:, 2])
+    L = 116 * f[..., 1] - 16
+    a = 500 * (f[..., 0] - f[..., 1])
+    b = 200 * (f[..., 1] - f[..., 2])
 
-    lab = np.stack([L, a, b], axis=1)
+    lab = np.stack([L, a, b], axis=-1)
 
-    return lab[0] if single else lab
+    return lab
 
 
 def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.ndarray, observer: np.ndarray | jnp.ndarray, step_wavelength: Number):

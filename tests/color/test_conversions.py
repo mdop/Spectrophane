@@ -109,6 +109,14 @@ def test_xyz_lab_batch_input():
 
     assert lab.shape == (2, 3)
 
+def test_xyz_to_lab_arbitrary_dims():
+    xyz = np.random.rand(2, 3, 4, 3)
+    white = np.array([0.95047, 1.0, 1.08883])
+
+    lab = xyz_to_lab(xyz, white)
+
+    assert lab.shape == xyz.shape
+
 def test_xyz_lab_small_values_branch():
     xyz = np.array([0.001, 0.001, 0.001])
     white = np.array([0.95047, 1.000, 1.08883])
