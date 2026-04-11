@@ -24,6 +24,8 @@ def mock_evaluator():
             stacks = len(stacks.material_nums)
             vals = np.array([[(i)/(stacks), (i)/(stacks), (i)/(stacks)] for i in range(stacks)]) #evenly spaced values in rgb space diagonal
             return linrgb_to_xyz(decode_rgb(vals))
+        def get_whitepoint(self):
+            return np.array([0.95047, 1.000, 1.08883])
     return MockEvaluator()
 
 @pytest.mark.parametrize("compression_factor, steps", [

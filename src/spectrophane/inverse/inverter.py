@@ -3,7 +3,7 @@ import numpy as np
 from math import ceil
 
 from spectrophane.core.dataclasses import StackCandidates
-from spectrophane.color.conversions import decode_rgb, encode_rgb, linrgb_to_xyz, xyz_to_linrgb
+from spectrophane.color.conversions import decode_rgb, encode_rgb, linrgb_to_xyz, xyz_to_linrgb, xyz_to_lab
 from spectrophane.evaluation.evaluator import Evaluator
 from spectrophane.inverse.stack_generation import StackGenerator
 
@@ -47,16 +47,19 @@ class LUTInverter(Inverter):
         """Generates lookup table for color requests"""
         self._stacks = self._stack_generator.generate("complete")
         stack_xyz = self._eval.evaluate(stacks=self._stacks).astype(np.float32)
+        white_point = self._eval.get_whitepoint()
+        stack_lab = xyz_to_lab(stack_xyz, white_point)
         self._stacks.rgb = np.rint(encode_rgb(xyz_to_linrgb(stack_xyz))*255)
         xyz_space = self._generate_xyz_space()
+        lab_space = xyz_to_lab(xyz_space, white_point)
 
         #to find distances use ∣∣a−b∣∣^2=∣∣a∣∣^2+∣∣b∣∣^2−2a⋅b
-        xyz_flat = xyz_space.reshape(-1, 3)  # (n_voxels, 3)
-        a2 = np.sum(xyz_flat**2, axis=1, keepdims=True)      # (n_voxels, 1)
-        b2 = np.sum(stack_xyz**2, axis=1, keepdims=True).T   # (1, n_stacks)
+        lab_flat = lab_space.reshape(-1, 3)  # (n_voxels, 3)
+        a2 = np.sum(lab_flat**2, axis=1, keepdims=True)      # (n_voxels, 1)
+        b2 = np.sum(stack_lab**2, axis=1, keepdims=True).T   # (1, n_stacks)
 
         # Compute pairwise squared distances
-        dist2 = a2 + b2 - 2 * xyz_flat @ stack_xyz.T         # (n_voxels, n_stacks)
+        dist2 = a2 + b2 - 2 * lab_flat @ stack_lab.T         # (n_voxels, n_stacks)
         # Flatten voxel grid , calculate L2 distance
 
         # Best stack per voxel
@@ -65,6 +68,7 @@ class LUTInverter(Inverter):
         scores = np.zeros_like(best_stack_idx, dtype=np.float16)
         for i in range(len(scores)):
             scores[i] = dist2[i, best_stack_idx[i]]/np.sqrt(3)
+        scores = scores/np.max(scores)
 
         # Reshape back to LUT grid
         self._lut       = best_stack_idx.reshape(self._steps, self._steps, self._steps)

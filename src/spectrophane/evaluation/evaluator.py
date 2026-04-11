@@ -41,6 +41,10 @@ class Evaluator:
         if edge_stacks:
             self.set_renormalizer(edge_stacks)
     
+    def get_whitepoint(self):
+        white_arr = np.ones_like(self._illuminator)
+        return spectrum_to_xyz(white_arr, self._illuminator, self._observer, self._step_wavelength)
+    
     def set_renormalizer(self, edge_stacks: StackData):
         """Finds a color corrector to account for different maximum brightness. Pass edge case stacks, e.g. thinnest stacks of every material, to correct colors in evaluate."""
         colors = self.evaluate(edge_stacks, normalize=False)
