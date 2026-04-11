@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 import pytest
 
-from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb
+from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb, xyz_to_lab
 from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 from spectrophane.core.dataclasses import SpectrumBlock, WavelengthAxis
 
@@ -70,6 +70,53 @@ def test_deencode_rgb_multi(mock_rgb_2D):
 
     roundtrip = encode_rgb(decode_rgb(mock_rgb_2D))
     assert np.allclose(roundtrip, mock_rgb_2D, rtol=0.004)
+
+def test_xyz_lab_white_point():
+    xyz = np.array([95.047, 100.0, 108.883])
+    white = np.array([95.047, 100.0, 108.883])
+
+    lab = xyz_to_lab(xyz, white)
+
+    assert np.allclose(lab, [100.0, 0.0, 0.0], atol=1e-4)
+
+def test_xyz_lab_known_value_1():
+    #color coordinates calculates by Lindbloom with D65 illuminant
+    xyz = np.array([0.4124, 0.2126, 0.0193])
+    white = np.array([0.95047, 1.000, 1.08883])
+
+    lab = xyz_to_lab(xyz, white)
+
+    expected = np.array([53.2329, 80.1093, 67.2201])
+    assert np.allclose(lab, expected, atol=1e-3)
+
+def test_xyz_lab_neutral_gray():
+    white = np.array([0.95047, 1.000, 1.08883])
+    grey = np.array([0.200, 0.200, 0.200]) * white / 100
+
+    lab = xyz_to_lab(grey, white)
+
+    assert abs(lab[1]) < 1e-4
+    assert abs(lab[2]) < 1e-4
+
+def test_xyz_lab_batch_input():
+    xyz = np.array([
+        [0.95047, 1.000, 1.08883],
+        [0.4124, 0.2126, 0.0193]
+    ])
+    white = np.array([0.95047, 1.000, 1.08883])
+
+    lab = xyz_to_lab(xyz, white)
+
+    assert lab.shape == (2, 3)
+
+def test_xyz_lab_small_values_branch():
+    xyz = np.array([0.001, 0.001, 0.001])
+    white = np.array([0.95047, 1.000, 1.08883])
+
+    lab = xyz_to_lab(xyz, white)
+
+    # Should not produce NaNs or inf
+    assert np.all(np.isfinite(lab))
 
 def test_spectrum_to_xyz_np():
     light = np.random.rand(100)

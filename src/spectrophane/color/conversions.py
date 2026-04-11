@@ -46,6 +46,43 @@ def encode_rgb(linrgb_arr: np.ndarray) -> np.ndarray:
     #TODO: Add customizable gamma
     return np.clip(np.where(linrgb_arr < 0.018, linrgb_arr*4.5, 1.099 * np.pow(linrgb_arr,0.45)-0.099), 0, 1)
 
+
+def xyz_to_lab(xyz: np.ndarray, white: np.ndarray):
+    """Converts a set of xyz values into lab values for a given white point coordinate. xyz shape (N,3) or (3,), white shape (3,). Returns shape of xyz"""
+    single = False
+
+    single = xyz.ndim == 1
+    if single:
+        xyz = xyz.reshape(1, 3)
+
+    assert xyz.shape[1] == 3
+    assert white.shape == (3,)
+    assert np.all(white > 0)
+
+    # Normalize
+    xyz_n = xyz / white.reshape(1, 3)
+
+    # Constants
+    epsilon = 216.0 / 24389  # 0.008856
+    kappa = 24389.0 / 27     # 903.3
+
+    # f(t)
+    f = np.where(
+        xyz_n > epsilon,
+        np.cbrt(xyz_n),
+        (kappa * xyz_n + 16) / 116
+    )
+
+    # Compute Lab
+    L = 116 * f[:, 1] - 16
+    a = 500 * (f[:, 0] - f[:, 1])
+    b = 200 * (f[:, 1] - f[:, 2])
+
+    lab = np.stack([L, a, b], axis=1)
+
+    return lab[0] if single else lab
+
+
 def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.ndarray, observer: np.ndarray | jnp.ndarray, step_wavelength: Number):
     """Calculates normalization factor for spectrum to xyz conversion for indirect illumination from harmonized spectra of the light source and observer"""
     if isinstance(light_source, np.ndarray):
