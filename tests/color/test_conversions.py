@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 import pytest
 
-from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb, xyz_to_lab
+from spectrophane.color.conversions import linrgb_to_xyz, xyz_to_linrgb, spectrum_to_xyz, decode_rgb, encode_rgb, xyz_to_lab, color_distance, D65_WHITE
 from spectrophane.color.spectral_helper import _import_CIE_light_sources, _import_CIE_observers
 from spectrophane.core.dataclasses import SpectrumBlock, WavelengthAxis
 
@@ -125,6 +125,29 @@ def test_xyz_lab_small_values_branch():
 
     # Should not produce NaNs or inf
     assert np.all(np.isfinite(lab))
+
+
+def test_color_distance_lab_mode():
+    # Test case 1: Identical colors should have zero distance
+    xyz1 = np.array([[0.5, 0.5, 0.5]])
+    xyz2 = np.array([[0.5, 0.5, 0.5]])
+    dist = color_distance(xyz1, xyz2, distance_mode="lab", white=D65_WHITE)
+    assert np.allclose(dist, 0.0), "Distance between identical colors should be zero"
+
+    # Test case 2: Different colors should have non-zero distance
+    xyz1 = np.array([[0.5, 0.5, 0.5]])
+    xyz2 = np.array([[0.7, 0.7, 0.7]])
+    dist = color_distance(xyz1, xyz2, distance_mode="lab", white=D65_WHITE)
+    assert dist.shape == (1, 1), "Output shape should be (N, M)"
+    assert np.all(dist > 0.0), "Distance between different colors should be non-zero"
+
+def test_color_distance_invalid_mode():
+    xyz1 = np.array([[0.5, 0.5, 0.5]])
+    xyz2 = np.array([[0.7, 0.7, 0.7]])
+    with pytest.raises(ValueError, match="Unknown color distance mode"):
+        color_distance(xyz1, xyz2, distance_mode="invalid_mode", white=D65_WHITE)
+
+
 
 def test_spectrum_to_xyz_np():
     light = np.random.rand(100)

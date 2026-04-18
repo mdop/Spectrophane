@@ -52,22 +52,17 @@ def xyz_to_lab(xyz: np.ndarray, white: np.ndarray):
     assert xyz.shape[-1] == 3, "Last dimension of xyz must be 3"
     assert white.shape == (3,), "White must be shape (3,)"
     assert np.all(white > 0), "White point must be positive"
-
-    # Normalize
-    xyz_n = xyz / white
-
     # Constants
     epsilon = 216.0 / 24389  # 0.008856
     kappa = 24389.0 / 27     # 903.3
+    xyz_n = xyz / white
 
-    # f(t)
     f = np.where(
         xyz_n > epsilon,
         np.cbrt(xyz_n),
         (kappa * xyz_n + 16) / 116
     )
 
-    # Compute Lab
     L = 116 * f[..., 1] - 16
     a = 500 * (f[..., 0] - f[..., 1])
     b = 200 * (f[..., 1] - f[..., 2])
@@ -75,6 +70,25 @@ def xyz_to_lab(xyz: np.ndarray, white: np.ndarray):
     lab = np.stack([L, a, b], axis=-1)
 
     return lab
+
+D65_WHITE = np.array([0.9504, 1.0000, 1.0888]) #white point for D65 illuminant and CIE1931 2° observer
+
+def color_distance(xyz1: np.ndarray, xyz2: np.ndarray, distance_mode: str = "lab", white: np.ndarray = D65_WHITE) -> np.ndarray:
+    """calculates color distance with a given mode. xyz1 and xyz2 of shape (N,3) and (M,3) and the return array is of shape (N,M) 
+        Currently implemented: "lab": Euclidian distance in Lab space"""
+    if distance_mode == "lab":
+        lab1 = xyz_to_lab(xyz1, white)
+        lab2 = xyz_to_lab(xyz2, white)
+        lab1_2 = np.sum(lab1**2, axis=1, keepdims=True)         # (N, 1)
+        lab2_2 = np.sum(lab2**2, axis=1, keepdims=True).T       # (1, M)
+
+        #Compute pairwise squared distances
+        #euclidian distance by ∣∣a−b∣∣^2=∣∣a∣∣^2+∣∣b∣∣^2−2a*b
+        dist = lab1_2 + lab2_2 - 2 * lab1 @ lab2.T             # (N, M)
+    else:
+        raise ValueError(f"Unknown color distance mode {distance_mode}")
+
+    return dist
 
 
 def compute_spectrum_xyz_normalization_factor(light_source: np.ndarray | jnp.ndarray, observer: np.ndarray | jnp.ndarray, step_wavelength: Number):
