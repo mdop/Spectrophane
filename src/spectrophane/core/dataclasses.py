@@ -290,9 +290,10 @@ class Box(SolidPrimitive):
     z0: float
     z1: float
 
-@dataclass(frozen=True, slots=True) #Not used now, but will be interesting for STEP export
+@dataclass(frozen=True, slots=True)
 class Prism(SolidPrimitive):
-    base_xy: np.ndarray  # shape (N, 2), dtype=float64
+    outer: list[tuple[float, float]]
+    holes: list[list[tuple[float, float]]]
     z0: float
     z1: float
 
