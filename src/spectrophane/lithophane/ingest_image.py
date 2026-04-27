@@ -6,10 +6,10 @@ from spectrophane.core.dataclasses import StackCandidates, StackData, VoxelGeome
 from spectrophane.color.conversions import linrgb_to_xyz, decode_rgb
 
 def format_image(image: ImageFile, resolution: tuple[int,int]) -> np.ndarray:
-    """Preprocess image for inverter. Returns the image as a numpy array"""
+    """Preprocess image for inverter. Returns the image as a numpy array in cartesian coordinates."""
     image = image.resize(resolution)
     #TODO: Implement color curve/brightness/contrast changes to optimize for color gamut
-    return np.array(image)
+    return np.array(image)[:,::-1]
 
 def image_to_stackmap(image: np.ndarray, inverter: Inverter, convert_xyz: bool = True) -> tuple[StackCandidates, np.ndarray, np.ndarray]:
     """Transforms pre-processed image into a stack representation. Returns StackCandidates of unique colors and an index map for the image and calculated scores of the image."""
