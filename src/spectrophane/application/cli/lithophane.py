@@ -190,10 +190,10 @@ def lithophane_command(
     )
 
     output_base_stem = str(Path(output_base).with_suffix(""))
-    expected_img = Image.fromarray(expected_img_arr)
+    expected_img = Image.fromarray(expected_img_arr[:,::-1]) #cartesian -> screen coordinates
     expected_img.show()
     expected_img.save(output_base_stem + "_expected.jpg")
-    score_img = Image.fromarray(score_img_arr)
+    score_img = Image.fromarray(score_img_arr[:,::-1]) #cartesian -> screen coordinates
     score_img.show()
     score_img.save(output_base_stem + "_score.jpg")
 
