@@ -1,6 +1,7 @@
-from typing import Tuple, Optional, Sequence, Self, Callable, Any
+from typing import Tuple, Optional, Sequence, Self, Callable, Any, Iterable
 import numpy as np
 from numbers import Number
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
 
 @dataclass
@@ -278,17 +279,47 @@ class VoxelGeometry:
     material_names: str
 
 
-class SolidPrimitive:
-    pass
+@dataclass(frozen=True)
+class AffineTransform:
+    """Scale transform from integer grid/precision space to mm space."""
+    pixel_size_x: float
+    pixel_size_y: float
+    z_precision_mm: float
+
+    def apply_x(self, i: int) -> float: 
+        return i * self.pixel_size_x
+    def apply_y(self, i: int) -> float: 
+        return i * self.pixel_size_y
+    def apply_z(self, i: int) -> float: 
+        return i * self.z_precision_mm
+
+class SolidPrimitive(ABC):
+    @abstractmethod
+    def to_mm(self, transform: AffineTransform) -> "SolidPrimitive":
+        ...
+
+GridSolidPrimitive = SolidPrimitive
+MmSolidPrimitive = SolidPrimitive
 
 @dataclass(frozen=True, slots=True)
 class Box(SolidPrimitive):
-    x0: float
-    x1: float
-    y0: float
-    y1: float
-    z0: float
-    z1: float
+    x0: int # x and y in pixel index units
+    x1: int
+    y0: int
+    y1: int
+    z0: int # z in units of AffineTransform.z_precision_mm
+    z1: int
+
+    def to_mm(self, transform: AffineTransform) -> "Box":
+        """Returns a Box in mm units. Note: returned box has floats in int fields."""
+        return Box(
+            transform.apply_x(self.x0), transform.apply_x(self.x1),
+            transform.apply_y(self.y0), transform.apply_y(self.y1),
+            transform.apply_z(self.z0), transform.apply_z(self.z1),
+        )
+# Type aliases for documentation at call sites
+GridBox = Box
+MmBox = Box
 
 @dataclass(frozen=True, slots=True)
 class Prism(SolidPrimitive):
@@ -296,6 +327,12 @@ class Prism(SolidPrimitive):
     holes: list[list[tuple[float, float]]]
     z0: float
     z1: float
+
+@dataclass(frozen=True)
+class GridSolidCollection:
+    """Solids in integer grid/z-precision space, with the transform to mm."""
+    transform: AffineTransform
+    solids: Iterable[SolidPrimitive]
 
 
 ############################## Pipeline dataclasses ##############################

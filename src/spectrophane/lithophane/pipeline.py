@@ -11,8 +11,9 @@ from spectrophane.inverse.inverter import Inverter, LUTInverter
 def export_geometry(geometry: VoxelGeometry, builder: SolidBuilder, export_backend: SolidBackend) -> list[str]:
     """Orchestrator for voxel map -> 3D model file"""
     for material_id in np.unique(geometry.materials):
-        export_backend.begin(material_id)
-        for solid in builder.solids_for_material(geometry, material_id):
+        solid_collection = builder.solids_for_material(geometry, material_id)
+        export_backend.begin(material_id, solid_collection.transform)
+        for solid in solid_collection.solids:
             export_backend.add(solid)
 
     return export_backend.end()

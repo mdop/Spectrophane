@@ -11,11 +11,11 @@ def voxel_count_from_boxes(boxes, geometry):
 
     count = 0
     for b in boxes:
-        dx = int(round((b.x1 - b.x0) / pixel_x))
-        dy = int(round((b.y1 - b.y0) / pixel_y))
+        dx = b.x1 - b.x0
+        dy = b.y1 - b.y0
 
-        z0 = np.searchsorted(cumulative_z, b.z0, side="left")
-        z1 = np.searchsorted(cumulative_z, b.z1, side="left")
+        z0 = np.searchsorted(cumulative_z, b.z0/1000.0, side="left")
+        z1 = np.searchsorted(cumulative_z, b.z1/1000.0, side="left")
         dz = z1 - z0
 
         count += dx * dy * dz
@@ -34,7 +34,8 @@ def test_per_voxel_solids_returns_boxes(simple_geometry):
     builder = PerVoxelBoxBuilder()
     
     for i in range(len(simple_geometry.material_names)):
-        solids = list(builder.solids_for_material(simple_geometry, i))
+        solid_collection = builder.solids_for_material(simple_geometry, i)
+        solids = list(solid_collection.solids)
         assert len(solids) == np.sum(simple_geometry.materials == i)
         for solid in solids:
             assert isinstance(solid, Box)
@@ -42,7 +43,8 @@ def test_per_voxel_solids_returns_boxes(simple_geometry):
 def test_per_voxel_solids_skips_non_matches(simple_geometry):
     builder = PerVoxelBoxBuilder()
 
-    solids = list(builder.solids_for_material(simple_geometry, 10))
+    solid_collection = builder.solids_for_material(simple_geometry, 10)
+    solids = list(solid_collection.solids)
 
     assert len(solids) == 0
 
@@ -58,35 +60,40 @@ def test_per_voxel_solids_box_geometry_check(
 ):
     builder = PerVoxelBoxBuilder()
 
-    solid = list(builder.solids_for_material(simple_geometry, material_id))[0]
+    solid_collection = builder.solids_for_material(simple_geometry, material_id)
+    solid = list(solid_collection.solids)[0]
     assert isinstance(solid, Box)
     assert solid.x0 == pytest.approx(expected_x0)
     assert solid.x1 == pytest.approx(expected_x1)
     assert solid.y0 == pytest.approx(expected_y0)
     assert solid.y1 == pytest.approx(expected_y1)
-    assert solid.z0 == pytest.approx(expected_z0)
-    assert solid.z1 == pytest.approx(expected_z1)
+    assert solid.z0 == pytest.approx(expected_z0*1000)
+    assert solid.z1 == pytest.approx(expected_z1*1000)
 
 def test_greedy_meshing_preserves_voxel_count(simple_geometry):
     greedy = GreedyMeshingBoxBuilder()
     naive = PerVoxelBoxBuilder()
 
     for material_id in range(len(simple_geometry.material_names)):
-        greedy_boxes = list(greedy.solids_for_material(simple_geometry, material_id))
-        naive_boxes = list(naive.solids_for_material(simple_geometry, material_id))
+        solid_collection = greedy.solids_for_material(simple_geometry, material_id)
+        greedy_boxes = list(solid_collection.solids)
+        solid_collection = naive.solids_for_material(simple_geometry, material_id)
+        naive_boxes = list(solid_collection.solids)
 
         greedy_count = voxel_count_from_boxes(greedy_boxes, simple_geometry)
         naive_count = len(naive_boxes)
 
         assert greedy_count == naive_count
 
-def test_greedy_meshing_reduces__box_count(simple_geometry):
+def test_greedy_meshing_reduces_box_count(simple_geometry):
     greedy = GreedyMeshingBoxBuilder()
     naive = PerVoxelBoxBuilder()
 
     for material_id in range(len(simple_geometry.material_names)):
-        greedy_boxes = list(greedy.solids_for_material(simple_geometry, material_id))
-        naive_boxes = list(naive.solids_for_material(simple_geometry, material_id))
+        solid_collection = greedy.solids_for_material(simple_geometry, material_id)
+        greedy_boxes = list(solid_collection.solids)
+        solid_collection = naive.solids_for_material(simple_geometry, material_id)
+        naive_boxes = list(solid_collection.solids)
 
         assert len(greedy_boxes) <= len(naive_boxes)
 
@@ -99,14 +106,15 @@ def test_greedy_meshing_single_block():
     )
 
     builder = GreedyMeshingBoxBuilder()
-    boxes = list(builder.solids_for_material(geometry, 1))
+    solid_collection = builder.solids_for_material(geometry, 1)
+    boxes = list(solid_collection.solids)
 
     assert len(boxes) == 1
 
     b = boxes[0]
-    assert b.x0 == 0.0 and b.x1 == 2.0
-    assert b.y0 == 0.0 and b.y1 == 2.0
-    assert b.z0 == 0.0 and b.z1 == 2.0
+    assert b.x0 == 0 and b.x1 == 2
+    assert b.y0 == 0 and b.y1 == 2
+    assert b.z0 == 0 and b.z1 == 2000
 
 def test_greedy_meshing_merges_rectangle():
     geometry = VoxelGeometry(
@@ -117,13 +125,14 @@ def test_greedy_meshing_merges_rectangle():
     )
 
     builder = GreedyMeshingBoxBuilder()
-    boxes = list(builder.solids_for_material(geometry, 1))
+    solid_collection = builder.solids_for_material(geometry, 1)
+    boxes = list(solid_collection.solids)
 
     assert len(boxes) == 1
 
     b = boxes[0]
-    assert b.x1 - b.x0 == 2.0
-    assert b.y1 - b.y0 == 2.0
+    assert b.x1 - b.x0 == 2
+    assert b.y1 - b.y0 == 2
 
 
 

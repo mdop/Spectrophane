@@ -5,101 +5,117 @@ from typing import Iterator, Tuple, Sequence
 import numpy as np
 from collections import defaultdict
 
-from spectrophane.core.dataclasses import VoxelGeometry, SolidPrimitive, Box, Prism
+from spectrophane.core.dataclasses import VoxelGeometry, Box, Prism, GridSolidCollection, AffineTransform
 
 class SolidBuilder(ABC):
     """Generates solid 3D objects from a VoxelGeometry array. Assumes cartesian coordinates."""
+    def __init__(self, z_precision_mm: float = 0.001):
+        self.z_precision_mm = z_precision_mm
+
     @abstractmethod
-    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> Iterator[SolidPrimitive]:
+    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> GridSolidCollection:
         ...
 
 
 class PerVoxelBoxBuilder(SolidBuilder):
-    def solids_for_material(self, geometry: VoxelGeometry, material_id: int):
+    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> GridSolidCollection:
         total_x, total_y, total_z = geometry.materials.shape
-        cumulative_z = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
+        cumulative_z_mm = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
+        cumulative_z_int = np.round(cumulative_z_mm / self.z_precision_mm).astype(np.int32)
         pixel_x, pixel_y = geometry.voxel_size_xy
-        for x_idx in range(total_x):
-            for y_idx in range(total_y):
-                for z_idx in range(total_z):
-                    if geometry.materials[x_idx, y_idx, z_idx] != material_id:
-                        continue
-                    yield Box(x_idx * pixel_x, (x_idx + 1) * pixel_x,
-                              y_idx * pixel_y, (y_idx + 1) * pixel_y,
-                              cumulative_z[z_idx], cumulative_z[z_idx+1])
+        transform = AffineTransform(pixel_x, pixel_y, self.z_precision_mm)
+
+        def _boxes():
+            for x_idx in range(total_x):
+                for y_idx in range(total_y):
+                    for z_idx in range(total_z):
+                        if geometry.materials[x_idx, y_idx, z_idx] != material_id:
+                            continue
+                        yield Box(  x_idx, x_idx + 1,
+                                    y_idx, y_idx + 1,
+                                    cumulative_z_int[z_idx], cumulative_z_int[z_idx+1])
+        return GridSolidCollection(transform, _boxes())
 
 
 class GreedyMeshingBoxBuilder(SolidBuilder):
-    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> Iterator[SolidPrimitive]:
+    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> GridSolidCollection:
         materials = geometry.materials
         total_x, total_y, total_z = materials.shape
 
         pixel_x, pixel_y = geometry.voxel_size_xy
-        cumulative_z = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
+        cumulative_z_mm = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
+        cumulative_z_int = np.round(cumulative_z_mm / self.z_precision_mm).astype(np.int32)
+        transform = AffineTransform(pixel_x, pixel_y, self.z_precision_mm)
 
-        # Track which voxels are already consumed
-        visited = np.zeros_like(materials, dtype=bool)
 
-        for x0 in range(total_x):
-            for y0 in range(total_y):
-                for z0 in range(total_z):
-                    # Skip if not target material or already merged
-                    if visited[x0, y0, z0] or materials[x0, y0, z0] != material_id:
-                        continue
+        def _boxes():
+            # Track which voxels are already consumed
+            visited = np.zeros_like(materials, dtype=bool)
 
-                    # fitting startin point, expand in x
-                    x1 = x0
-                    while x1 < total_x:
-                        if visited[x1, y0, z0] or materials[x1, y0, z0] != material_id:
-                            break
-                        x1 += 1
+            for x0 in range(total_x):
+                for y0 in range(total_y):
+                    for z0 in range(total_z):
+                        # Skip if not target material or already merged
+                        if visited[x0, y0, z0] or materials[x0, y0, z0] != material_id:
+                            continue
 
-                    # expand in y
-                    y1 = y0
-                    while y1 < total_y:
-                        valid = True
-                        for x in range(x0, x1):
-                            if visited[x, y1, z0] or materials[x, y1, z0] != material_id:
-                                valid = False
+                        # fitting startin point, expand in x
+                        x1 = x0
+                        while x1 < total_x:
+                            if visited[x1, y0, z0] or materials[x1, y0, z0] != material_id:
                                 break
-                        if not valid:
-                            break
-                        y1 += 1
+                            x1 += 1
 
-                    # expand in z
-                    z1 = z0
-                    while z1 < total_z:
-                        valid = True
-                        for x in range(x0, x1):
-                            for y in range(y0, y1):
-                                if visited[x, y, z1] or materials[x, y, z1] != material_id:
+                        # expand in y
+                        y1 = y0
+                        while y1 < total_y:
+                            valid = True
+                            for x in range(x0, x1):
+                                if visited[x, y1, z0] or materials[x, y1, z0] != material_id:
                                     valid = False
                                     break
                             if not valid:
                                 break
-                        if not valid:
-                            break
-                        z1 += 1
+                            y1 += 1
 
-                    # mark visited and emit
-                    visited[x0:x1, y0:y1, z0:z1] = True
-                    yield Box(
-                        x0 * pixel_x, x1 * pixel_x,
-                        y0 * pixel_y, y1 * pixel_y,
-                        cumulative_z[z0], cumulative_z[z1],
-                    )
+                        # expand in z
+                        z1 = z0
+                        while z1 < total_z:
+                            valid = True
+                            for x in range(x0, x1):
+                                for y in range(y0, y1):
+                                    if visited[x, y, z1] or materials[x, y, z1] != material_id:
+                                        valid = False
+                                        break
+                                if not valid:
+                                    break
+                            if not valid:
+                                break
+                            z1 += 1
+
+                        # mark visited and emit
+                        visited[x0:x1, y0:y1, z0:z1] = True
+                        yield Box(
+                            x0, x1,
+                            y0, y1,
+                            cumulative_z_int[z0], cumulative_z_int[z1],
+                        )
+        return GridSolidCollection(transform, _boxes())
 
 Point = Tuple[int, int]
 Edge = Tuple[Point, Point]
 
 class PrismBuilder(SolidBuilder):
-    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> Iterator[Prism]:
+    def solids_for_material(self, geometry: VoxelGeometry, material_id: int) -> GridSolidCollection:
         """Yields prisms with holes for the Voxelmap and the given material_id"""
         materials = geometry.materials
         total_z = materials.shape[2]
 
-        cumulative_z = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
+        cumulative_z_mm = np.concatenate([[0.0], np.cumsum(geometry.layer_thickness)])
         pixel_size_x, pixel_size_y = geometry.voxel_size_xy
+        cumulative_z_int = np.round(cumulative_z_mm / self.z_precision_mm).astype(np.int32)
+        transform = AffineTransform(pixel_size_x, pixel_size_y, self.z_precision_mm)
+
         mask = (materials == material_id)
 
         for z in range(total_z):
@@ -108,14 +124,11 @@ class PrismBuilder(SolidBuilder):
 
             polygons = self.mask_to_polygons(mask[z])
 
-            z0 = cumulative_z[z]
-            z1 = cumulative_z[z + 1]
+            z0 = cumulative_z_int[z]
+            z1 = cumulative_z_int[z + 1]
 
             for poly in polygons:
-                outer = self.scale_polygon(poly["outer"], pixel_size_x, pixel_size_y)
-                holes = [self.scale_polygon(h, pixel_size_x, pixel_size_y) for h in poly["holes"]]
-
-                yield Prism(outer=outer, holes=holes, z0=z0, z1=z1)
+                yield Prism(outer=poly["outer"], holes=poly["holes"], z0=z0, z1=z1)
     
     def mask_to_polygons(self, layer_mask: np.ndarray) -> list[dict[str, list[Point]]]:
         """Converts a layer mask into a list of polygons with outer and inner loops."""
@@ -176,9 +189,6 @@ class PrismBuilder(SolidBuilder):
                     edges.add(((x + 1, y + 1), (x, y + 1)))
 
         return edges
-    
-    def scale_polygon(self, poly, pixel_size_x, pixel_size_y):
-        return [(x * pixel_size_x, y * pixel_size_y) for (x, y) in poly]
     
     def trace_loops(self, edges: Sequence[Edge]) -> list[list[Point]]:
         """Takes a collection of edges and traces loops in those edges. Raises RuntimeError if broken loops are detected."""

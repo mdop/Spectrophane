@@ -4,6 +4,11 @@ import numpy as np
 import pytest
 
 from spectrophane.lithophane.export import STLTessellationBackend, Box
+from spectrophane.core.dataclasses import AffineTransform
+
+@pytest.fixture
+def transform():
+    return AffineTransform(1,1, 0.001)
 
 def test_box_tessellation_triangle_count():
     backend = STLTessellationBackend(base_path="dummy", material_names=["mat"], binary=False)
@@ -25,12 +30,12 @@ def test_box_tessellation_normals_are_unit_length():
 
     assert np.allclose(lengths, 1.0)
 
-def test_ascii_stl_output(tmp_path):
+def test_ascii_stl_output(tmp_path, transform):
     base_path = tmp_path / "model"
 
     backend = STLTessellationBackend(base_path=str(base_path), material_names=["white"], binary=False)
 
-    backend.begin(0)
+    backend.begin(0, transform)
     backend.add(Box(0, 1, 0, 1, 0, 1))
     backend.add(Box(1, 3, 2, 3, 1, 3))
     paths = backend.end()
@@ -50,12 +55,12 @@ def test_ascii_stl_output(tmp_path):
 
 
 @pytest.mark.parametrize("filename",  ["model", "model.stl"])
-def test_binary_stl_output(tmp_path, filename):
+def test_binary_stl_output(tmp_path, filename, transform):
     base_path = tmp_path / filename
 
     backend = STLTessellationBackend(base_path=str(base_path), material_names=["white"], binary=True)
 
-    backend.begin(0)
+    backend.begin(0, transform)
     backend.add(Box(0, 2, 0, 3, 1, 5))
     paths = backend.end()
 

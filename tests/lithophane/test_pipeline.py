@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from spectrophane.core.dataclasses import VoxelGeometry, StackCandidates
+from spectrophane.core.dataclasses import VoxelGeometry, StackCandidates, AffineTransform, GridSolidCollection
 from spectrophane.lithophane.pipeline import export_geometry, generate_lithophane_from_image
 from spectrophane.lithophane.ingest_image import image_to_stackmap, stackmap_to_voxelmap
 from spectrophane.lithophane.solid_generation import PerVoxelBoxBuilder
@@ -49,10 +49,10 @@ def test_export_geometry(mock_geometry):
     # Mock SolidBuilder and SolidBackend
     class MockSolidBuilder:
         def solids_for_material(self, geometry, material_id):
-            return [f"Solid_{material_id}"]
+            return GridSolidCollection(AffineTransform(1,1,0.001), [f"Solid_{material_id}"])
 
     class MockExportBackend:
-        def begin(self, material_id):
+        def begin(self, material_id, transform):
             pass
 
         def add(self, solid):

@@ -3,7 +3,7 @@ import numpy as np
 import struct
 from pathlib import PosixPath, Path
 
-from spectrophane.lithophane.solid_generation import SolidPrimitive, Box, Prism
+from spectrophane.core.dataclasses import GridSolidPrimitive, AffineTransform, Box, Prism
 
 
 class SolidBackend(ABC):
@@ -16,12 +16,12 @@ class SolidBackend(ABC):
         ...
 
     @abstractmethod
-    def begin(self, material_index: int):
+    def begin(self, material_index: int, grid_mm_transform: AffineTransform):
         """Starts writing primitives for a given material_index (index of material names in constructor). May create a new file at this point for the given material."""
         ...
 
     @abstractmethod
-    def add(self, primitive: SolidPrimitive) -> None:
+    def add(self, grid_primitive: GridSolidPrimitive) -> None:
         ...
     
     @abstractmethod
@@ -57,7 +57,8 @@ class STLTessellationBackend(SolidBackend):
     def supports(self, primitive):
         return isinstance(primitive, Box)
 
-    def begin(self, material_index: int):
+    def begin(self, material_index: int, grid_mm_transform: AffineTransform):
+        self._grid_mm_transform = grid_mm_transform
         if self._handlers[material_index] is None:
             material_name = self._material_names[material_index]
             filename = self._base_path + "_" + material_name + ".stl"
@@ -75,7 +76,8 @@ class STLTessellationBackend(SolidBackend):
         self._active_handler = self._handlers[material_index]
         self._active_index = material_index
 
-    def add(self, primitive: SolidPrimitive) -> None:
+    def add(self, grid_primitive: GridSolidPrimitive) -> None:
+        primitive = grid_primitive.to_mm(self._grid_mm_transform)
         if isinstance(primitive, Box):
             triangles = self._tessellate_box(primitive)
         else:
