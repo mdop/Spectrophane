@@ -62,7 +62,6 @@ class STLTessellationBackend(SolidBackend):
         if self._handlers[material_index] is None:
             material_name = self._material_names[material_index]
             filename = self._base_path + "_" + material_name + ".stl"
-            self._handlers[material_index] = open(filename, mode="wt")
             if self._binary:
                 self._handlers[material_index] = open(filename, mode="wb")
                 header = (f"material_{material_name}" + (" " * 80)).encode("ascii")[:80]
