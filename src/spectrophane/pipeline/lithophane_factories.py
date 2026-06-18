@@ -91,7 +91,7 @@ def generate_lithophane_export_backend(base_path: str | PosixPath, config: Litho
     if config.export_backend_format == "stl":
         bin = config.export_stl_type == "binary"
         backend = STLTessellationBackend(base_path=str(base_path),
-                                         material_names=config.material_names,
+                                         material_data=config.material_data,
                                          binary=bin)
     else:
         raise ValueError(f"Unknown lithophane export algorithm {config.export_backend_format}")

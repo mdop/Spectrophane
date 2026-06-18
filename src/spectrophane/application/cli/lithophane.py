@@ -174,7 +174,7 @@ def lithophane_command(
     litho_config = LithophaneConfig(
         resolution=resolution,
         pixel_xy_dimension=pixel_size,
-        material_names=material_names,
+        material_data=materials,
     )
 
     # -------------------------
@@ -183,7 +183,6 @@ def lithophane_command(
     output_paths, expected_img_arr, score_img_arr = image_to_lithophane(
         image=image,
         output_base_path=output_base,
-        material_names=available_names,
         inverter=inverter,
         stack_rules=stack_rules,
         config=litho_config,

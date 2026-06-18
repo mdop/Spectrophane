@@ -75,7 +75,6 @@ def parameter_to_inverter(material_parameter: MaterialParams,
 
 def image_to_lithophane(image: ImageFile,
                         output_base_path: str | PosixPath,
-                        material_names: list[str],
                         inverter: Inverter,
                         stack_rules: StackTopologyRules,
                         config: LithophaneConfig) -> tuple[list[str], np.ndarray, np.ndarray]:
@@ -86,7 +85,7 @@ def image_to_lithophane(image: ImageFile,
                                                                         inverter=inverter,
                                                                         layer_thicknesses=stack_rules.layer_thicknesses,
                                                                         voxel_size_xy=config.pixel_xy_dimension,
-                                                                        material_names=material_names,
+                                                                        material_names=config.get_names(),
                                                                         builder=builder,
                                                                         export_backend=backend)
     return output_paths, calc_image, score_img

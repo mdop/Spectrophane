@@ -71,15 +71,16 @@ def test_export_geometry(mock_geometry):
 
 def test_transform_image_integrationtest(tmp_path, mock_image, mock_inverter):
     output_basepath = tmp_path / "test.stl" #check if optional file extension is correctly handled
-    material_names = ["MaterialA", "MaterialB"]
+    material_data = [{"name": "MaterialA"}, {"name": "MaterialB"}]
     target_width = 30
     target_height = 20
+    material_names = [material["name"] for material in material_data]
     output_files, expected_rgb_img, score_img = generate_lithophane_from_image(mock_image, (target_width, target_height),
                                                                 mock_inverter,
                                                                 np.array([0.1,0.2]), (0.4,0.4),
                                                                 material_names,
                                                                 PerVoxelBoxBuilder(),
-                                                                STLTessellationBackend(output_basepath, material_names, binary=True))
+                                                                STLTessellationBackend(output_basepath, material_data, binary=True))
     
     assert len(output_files) == 2
     assert output_files[0].endswith("test_MaterialA.stl")
